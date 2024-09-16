@@ -34,6 +34,8 @@ func (g *Game) Layout(w, h int) (int, int) {
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(colornames.Black)
 
+	redColor := HSVtoRGB(1.0, 1.0, 1.0)
+
 	for x := 0; x < screenWidth; x++ {
 		cameraX := 2*float64(x)/float64(screenWidth) - 1
 		rayDirX := g.player.dirX + g.player.planeX*cameraX
@@ -50,7 +52,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 
 		if nearestDist < math.MaxFloat64 {
-			wallColor := HSVtoRGB(1.0, 1.0, 1.0)
+			wallColor := redColor
 
 			ldist := (nearestDist)
 			dist := 255 - (ldist*ldist)/2
