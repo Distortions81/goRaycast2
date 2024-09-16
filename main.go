@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"image/color"
 	"math"
 
@@ -12,19 +13,23 @@ import (
 const (
 	screenWidth  = 640
 	screenHeight = 480
-	mapWidth     = 8
-	mapHeight    = 8
 )
 
-var worldMap = [mapWidth][mapHeight]int{
-	{1, 1, 1, 1, 1, 1, 1, 1},
-	{1, 0, 0, 0, 0, 0, 0, 1},
-	{1, 0, 0, 0, 0, 0, 0, 1},
-	{1, 0, 0, 0, 120, 0, 0, 1},
-	{1, 0, 0, 180, 0, 0, 0, 1},
-	{1, 0, 0, 0, 0, 0, 0, 1},
-	{1, 0, 0, 0, 0, 0, 0, 1},
-	{1, 1, 1, 1, 1, 1, 1, 1},
+type Vector struct {
+	X1, Y1, X2, Y2 float64
+}
+
+var walls = []Vector{}
+
+func BoxToVectors(x, y, width, height float64) []Vector {
+	// Define the four corners of the box
+	topLeft := Vector{X1: x, Y1: y, X2: x + width, Y2: y}                       // Top edge
+	topRight := Vector{X1: x + width, Y1: y, X2: x + width, Y2: y + height}     // Right edge
+	bottomRight := Vector{X1: x + width, Y1: y + height, X2: x, Y2: y + height} // Bottom edge
+	bottomLeft := Vector{X1: x, Y1: y + height, X2: x, Y2: y}                   // Left edge
+
+	// Return the four edges of the box
+	return []Vector{topLeft, topRight, bottomRight, bottomLeft}
 }
 
 type Player struct {
@@ -35,38 +40,59 @@ type Game struct {
 	player Player
 }
 
-const turnSpeed = 0.05
+const pSpeed = 0.05
 
 func (g *Game) Update() error {
-	if ebiten.IsKeyPressed(ebiten.KeyW) {
-		g.player.posX += g.player.dirX * turnSpeed
-		g.player.posY += g.player.dirY * turnSpeed
-	}
 	if ebiten.IsKeyPressed(ebiten.KeyS) {
-		g.player.posX -= g.player.dirX * turnSpeed
-		g.player.posY -= g.player.dirY * turnSpeed
+		g.player.posX += g.player.dirX * pSpeed
+		g.player.posY += g.player.dirY * pSpeed
+	}
+	if ebiten.IsKeyPressed(ebiten.KeyW) {
+		g.player.posX -= g.player.dirX * pSpeed
+		g.player.posY -= g.player.dirY * pSpeed
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyA) {
 		oldDirX := g.player.dirX
-		g.player.dirX = g.player.dirX*math.Cos(turnSpeed) - g.player.dirY*math.Sin(turnSpeed)
-		g.player.dirY = oldDirX*math.Sin(turnSpeed) + g.player.dirY*math.Cos(turnSpeed)
+		g.player.dirX = g.player.dirX*math.Cos(pSpeed) - g.player.dirY*math.Sin(pSpeed)
+		g.player.dirY = oldDirX*math.Sin(pSpeed) + g.player.dirY*math.Cos(pSpeed)
 		oldPlaneX := g.player.planeX
-		g.player.planeX = g.player.planeX*math.Cos(turnSpeed) - g.player.planeY*math.Sin(turnSpeed)
-		g.player.planeY = oldPlaneX*math.Sin(turnSpeed) + g.player.planeY*math.Cos(turnSpeed)
+		g.player.planeX = g.player.planeX*math.Cos(pSpeed) - g.player.planeY*math.Sin(pSpeed)
+		g.player.planeY = oldPlaneX*math.Sin(pSpeed) + g.player.planeY*math.Cos(pSpeed)
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyD) {
 		oldDirX := g.player.dirX
-		g.player.dirX = g.player.dirX*math.Cos(-turnSpeed) - g.player.dirY*math.Sin(-turnSpeed)
-		g.player.dirY = oldDirX*math.Sin(-turnSpeed) + g.player.dirY*math.Cos(-turnSpeed)
+		g.player.dirX = g.player.dirX*math.Cos(-pSpeed) - g.player.dirY*math.Sin(-pSpeed)
+		g.player.dirY = oldDirX*math.Sin(-pSpeed) + g.player.dirY*math.Cos(-pSpeed)
 		oldPlaneX := g.player.planeX
-		g.player.planeX = g.player.planeX*math.Cos(-turnSpeed) - g.player.planeY*math.Sin(-turnSpeed)
-		g.player.planeY = oldPlaneX*math.Sin(-turnSpeed) + g.player.planeY*math.Cos(-turnSpeed)
+		g.player.planeX = g.player.planeX*math.Cos(-pSpeed) - g.player.planeY*math.Sin(-pSpeed)
+		g.player.planeY = oldPlaneX*math.Sin(-pSpeed) + g.player.planeY*math.Cos(-pSpeed)
 	}
 	return nil
 }
 
-func (g *Game) Layout(h int, w int) (int, int) {
-	return h, w
+func rayIntersectsSegment(px, py, rayDirX, rayDirY float64, wall Vector) (float64, bool) {
+	// Using line intersection formula
+	x1, y1, x2, y2 := wall.X1, wall.Y1, wall.X2, wall.Y2
+
+	denom := (x1-x2)*(py+rayDirY-py) - (y1-y2)*(px+rayDirX-px)
+	if denom == 0 {
+		return 0, false // Parallel lines
+	}
+
+	// t and u parameters for intersection formula
+	t := ((x1-px)*(py+rayDirY-py) - (y1-py)*(px+rayDirX-px)) / denom
+	u := -((x1-x2)*(y1-py) - (y1-y2)*(x1-px)) / denom
+
+	// If t and u are valid, we have an intersection
+	if t >= 0 && t <= 1 && u > 0 {
+		return u, true
+	}
+
+	return 0, false
+}
+
+func (g *Game) Layout(w, h int) (int, int) {
+	return w, h
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
@@ -77,107 +103,51 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		rayDirX := g.player.dirX + g.player.planeX*cameraX
 		rayDirY := g.player.dirY + g.player.planeY*cameraX
 
-		mapX := int(g.player.posX)
-		mapY := int(g.player.posY)
-
-		deltaDistX := math.Abs(1 / rayDirX)
-		deltaDistY := math.Abs(1 / rayDirY)
-
-		var stepX, stepY int
-		var sideDistX, sideDistY float64
-
-		if rayDirX < 0 {
-			stepX = -1
-			sideDistX = (g.player.posX - float64(mapX)) * deltaDistX
-		} else {
-			stepX = 1
-			sideDistX = (float64(mapX+1) - g.player.posX) * deltaDistX
-		}
-		if rayDirY < 0 {
-			stepY = -1
-			sideDistY = (g.player.posY - float64(mapY)) * deltaDistY
-		} else {
-			stepY = 1
-			sideDistY = (float64(mapY+1) - g.player.posY) * deltaDistY
-		}
-
-		var hit, side int
-		for hit == 0 {
-			if sideDistX < sideDistY {
-				sideDistX += deltaDistX
-				mapX += stepX
-				side = 0
-			} else {
-				sideDistY += deltaDistY
-				mapY += stepY
-				side = 1
-			}
-
-			if mapX >= mapWidth {
-				side = -1
-				break
-			} else if mapX < 0 {
-				side = -1
-				break
-			}
-			if mapY >= mapHeight {
-				side = -1
-				break
-			} else if mapY < 0 {
-				side = -1
-				break
-			}
-
-			if worldMap[mapX][mapY] > 0 {
-				hit = 1
+		nearestDist := math.MaxFloat64
+		for _, wall := range walls {
+			if dist, hit := rayIntersectsSegment(g.player.posX, g.player.posY, rayDirX, rayDirY, wall); hit {
+				if dist < nearestDist {
+					nearestDist = dist
+				}
 			}
 		}
 
-		var perpWallDist float64
-		if side == 0 {
-			perpWallDist = (float64(mapX) - g.player.posX + (1-float64(stepX))/2) / rayDirX
-		} else {
-			perpWallDist = (float64(mapY) - g.player.posY + (1-float64(stepY))/2) / rayDirY
-		}
+		if nearestDist < math.MaxFloat64 {
+			wallColor := HSVtoRGB(1.0, 1.0, 1.0)
 
-		lineHeight := int(float64(screenHeight) / perpWallDist)
-		drawStart := -lineHeight/2 + screenHeight/2
-		if drawStart < 0 {
-			drawStart = 0
-		}
-		drawEnd := lineHeight/2 + screenHeight/2
-		if drawEnd >= screenHeight {
-			drawEnd = screenHeight - 1
-		}
+			ldist := (nearestDist * 2)
+			dist := 255 - (ldist*ldist)/2
+			if dist > 255 {
+				dist = 255
+			} else if dist < 0 {
+				dist = 0
+			}
+			wallColor.A = uint8(dist)
 
-		var wallColor color.NRGBA
-		if side == 0 {
-			wallColor = HSVtoRGB(float64(worldMap[mapX][mapY]), 1.0, 1.0)
-		} else if side == 1 {
-			wallColor = HSVtoRGB(float64(worldMap[mapX][mapY]), 1.0, 0.7)
-		} else {
-			return
+			lineHeight := int(float64(screenHeight) / nearestDist)
+			drawStart := -lineHeight/2 + screenHeight/2
+			if drawStart < 0 {
+				drawStart = 0
+			}
+			drawEnd := lineHeight/2 + screenHeight/2
+			if drawEnd >= screenHeight {
+				drawEnd = screenHeight - 1
+			}
+
+			vector.DrawFilledRect(screen, float32(x), float32(drawStart), 1, float32(drawEnd-drawStart), wallColor, false)
 		}
-
-		ldist := (perpWallDist * 3)
-		dist := 255 - (ldist*ldist)/2
-		if dist > 255 {
-			dist = 255
-		} else if dist < 0 {
-			dist = 0
-		}
-		wallColor.A = uint8(dist)
-
-		vector.DrawFilledRect(screen, float32(x), float32(drawStart), 1, float32(drawEnd-drawStart), wallColor, false)
-
 	}
 }
 
 func main() {
+	walls = BoxToVectors(1, 1, 10, 10)
+	walls = append(walls, BoxToVectors(5, 5, 1, 1)...)
+	fmt.Println(walls)
+
 	game := &Game{
 		player: Player{
-			posX:   4.0,
-			posY:   4.0,
+			posX:   2.0,
+			posY:   2.0,
 			dirX:   -1.0,
 			dirY:   0.0,
 			planeX: 0.0,
@@ -186,7 +156,7 @@ func main() {
 	}
 
 	ebiten.SetWindowSize(screenWidth, screenHeight)
-	ebiten.SetWindowTitle("Minimal Raycaster")
+	ebiten.SetWindowTitle("Raycaster with Vectors")
 	if err := ebiten.RunGame(game); err != nil {
 		panic(err)
 	}
