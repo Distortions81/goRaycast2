@@ -1,21 +1,12 @@
 package main
 
 import (
-	"image/color"
-
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
 const (
 	screenWidth  = 1280
 	screenHeight = 720
-
-	mapMag = 10
-	mapOff = 10
-)
-
-var (
-	wallColor color.NRGBA = HSVtoRGB(1.0, 0, 1.0)
 )
 
 func (g *Game) Layout(w, h int) (int, int) {

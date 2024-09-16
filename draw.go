@@ -2,12 +2,23 @@ package main
 
 import (
 	"fmt"
+	"image/color"
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 	"golang.org/x/image/colornames"
+)
+
+const (
+	miniMapSize    = 10
+	miniMapOffset  = 10
+	lightIntensity = 500
+)
+
+var (
+	wallColor color.NRGBA = HSVtoRGB(180, 0.9, 0.25)
 )
 
 func (g *Game) Draw(screen *ebiten.Image) {
@@ -30,15 +41,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			wallColor := wallColor
 
 			// Calculate color with light falloff and gamma correction
-			valFloat := applyFalloffWithGammaCorrection(nearestDist, 1, 1)
-			value := valFloat * 255
-
-			if value > 255 {
-				value = 255
-			} else if value < 0 {
-				value = 0
-			}
-			wallColor.A = uint8(value)
+			valFloat := applyFalloff(nearestDist, lightIntensity, (float64(wallColor.R+wallColor.G+wallColor.B) / 765 / 3.0))
+			wallColor.A = uint8(valFloat * 255)
 
 			lineHeight := int(float64(screenHeight) / nearestDist)
 			drawStart := -lineHeight/2 + screenHeight/2
@@ -60,11 +64,11 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		x1, y1 := float32(v.X1), float32(v.Y1)
 		x2, y2 := float32(v.X2), float32(v.Y2)
 
-		x1, y1, x2, y2 = mapOff+x1*mapMag, mapOff+y1*mapMag, mapOff+x2*mapMag, mapOff+y2*mapMag
+		x1, y1, x2, y2 = miniMapOffset+x1*miniMapSize, miniMapOffset+y1*miniMapSize, miniMapOffset+x2*miniMapSize, miniMapOffset+y2*miniMapSize
 
 		vector.StrokeLine(screen, x1, y1, x2, y2, 1, colornames.Teal, false)
 	}
-	vector.DrawFilledCircle(screen, mapOff+float32(g.player.pos.X)*mapMag, mapOff+float32(g.player.pos.Y)*mapMag, 5, colornames.Yellow, false)
+	vector.DrawFilledCircle(screen, miniMapOffset+float32(g.player.pos.X)*miniMapSize, miniMapOffset+float32(g.player.pos.Y)*miniMapSize, 5, colornames.Yellow, false)
 
 	ebitenutil.DebugPrint(screen, fmt.Sprintf("FPS: %v", int(ebiten.ActualFPS())))
 }
