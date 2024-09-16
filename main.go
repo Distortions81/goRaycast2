@@ -79,9 +79,11 @@ const turnSpeed = 0.03
 const moveSpeed = 0.1
 
 func (g *Game) Update() error {
+	oldPlayer := g.player
 	if ebiten.IsKeyPressed(ebiten.KeyS) {
 		g.player.posX += g.player.dirX * moveSpeed
 		g.player.posY += g.player.dirY * moveSpeed
+
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyW) {
 		g.player.posX -= g.player.dirX * moveSpeed
@@ -105,6 +107,14 @@ func (g *Game) Update() error {
 	}
 	if ebiten.IsKeyPressed(ebiten.Key0) {
 		fmt.Printf("posX: %v, posY: %v, dirX: %v, dirY: %v, planeX: %v, planeY: %v\n", g.player.posX, g.player.posY, g.player.dirX, g.player.dirY, g.player.planeX, g.player.planeY)
+	}
+
+	for _, wall := range walls {
+		if dist, hit := rayIntersectsSegment(g.player.posX, g.player.posY, g.player.dirX, g.player.dirY, wall); hit {
+			if dist < 0.5 {
+				g.player = oldPlayer
+			}
+		}
 	}
 	return nil
 }
