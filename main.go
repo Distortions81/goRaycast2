@@ -4,7 +4,7 @@ import (
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/vector"
 	"golang.org/x/image/colornames"
 )
 
@@ -136,7 +136,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			wallColor = colornames.Darkred
 		}
 
-		ebitenutil.DrawLine(screen, float64(x), float64(drawStart), float64(x), float64(drawEnd), wallColor)
+		vector.DrawFilledRect(screen, float32(x), float32(drawStart), 1, float32(drawEnd-drawStart), wallColor, false)
 
 	}
 }
