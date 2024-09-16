@@ -34,7 +34,7 @@ func (g *Game) Layout(w, h int) (int, int) {
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(colornames.Black)
 
-	redColor := HSVtoRGB(1.0, 1.0, 1.0)
+	wallColor := HSVtoRGB(1.0, 0, 1.0)
 
 	for x := 0; x < screenWidth; x++ {
 		cameraX := 2*float64(x)/float64(screenWidth) - 1
@@ -52,16 +52,18 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 
 		if nearestDist < math.MaxFloat64 {
-			wallColor := redColor
+			wallColor := wallColor
 
-			ldist := (nearestDist)
-			dist := 255 - (ldist*ldist)/2
-			if dist > 255 {
-				dist = 255
-			} else if dist < 0 {
-				dist = 0
+			// Calculate color with light falloff and gamma correction
+			valFloat := applyFalloffWithGammaCorrection(nearestDist, 1, 1)
+			value := valFloat * 255
+
+			if value > 255 {
+				value = 255
+			} else if value < 0 {
+				value = 0
 			}
-			wallColor.A = uint8(dist)
+			wallColor.A = uint8(value)
 
 			lineHeight := int(float64(screenHeight) / nearestDist)
 			drawStart := -lineHeight/2 + screenHeight/2

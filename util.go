@@ -66,3 +66,47 @@ func BoxToVectors(x, y, width, height float64) []Vector {
 	// Return the four edges of the box
 	return []Vector{topLeft, topRight, bottomRight, bottomLeft}
 }
+
+// Linearize sRGB to linear space (remove gamma correction)
+func srgbToLinear(value float64) float64 {
+	if value <= 0.04045 {
+		return value / 12.92
+	}
+	return math.Pow((value+0.055)/1.055, 2.4)
+}
+
+// Apply gamma correction to convert from linear space to sRGB
+func linearToSrgb(value float64) float64 {
+	if value <= 0.0031308 {
+		return 12.92 * value
+	}
+	return 1.055*math.Pow(value, 1.0/2.4) - 0.055
+}
+
+// Calculate light falloff using inverse-square law
+func calculateLightFalloff(distance float64, intensity float64) float64 {
+	// Basic inverse-square law: falloff = intensity / (distance^2)
+	if distance <= 0 {
+		return intensity // Prevent division by zero
+	}
+	return intensity / (distance * distance)
+}
+
+// Calculate color with falloff and gamma correction
+func applyFalloffWithGammaCorrection(distance float64, intensity float64, value float64) float64 {
+	var correctedValue float64
+
+	// Linearize each color channel
+	linear := srgbToLinear(value)
+
+	// Apply light falloff
+	falloff := calculateLightFalloff(distance, intensity)
+
+	// Multiply each linear channel by falloff
+	linear *= falloff
+
+	// Reapply gamma correction and clamp values to [0, 1]
+	correctedValue = math.Max(0, math.Min(1, linearToSrgb(linear)))
+
+	return correctedValue
+}
