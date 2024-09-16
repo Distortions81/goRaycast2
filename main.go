@@ -39,6 +39,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		rayDirX := g.player.dirX + g.player.planeX*cameraX
 		rayDirY := g.player.dirY + g.player.planeY*cameraX
 
+		//Need to optimize, this is a slow way to do this
 		nearestDist := math.MaxFloat64
 		for _, wall := range walls {
 			if dist, hit := rayIntersectsSegment(g.player.posX, g.player.posY, rayDirX, rayDirY, wall); hit {
