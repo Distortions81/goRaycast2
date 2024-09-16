@@ -7,8 +7,11 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-const turnSpeed = 0.03
-const moveSpeed = 0.1
+const (
+	turnSpeed  = 0.03
+	moveSpeed  = 0.1
+	playerSize = 0.5
+)
 
 func (g *Game) Update() error {
 	oldPlayer := g.player
@@ -43,11 +46,12 @@ func (g *Game) Update() error {
 
 	for _, wall := range walls {
 		if dist, hit := rayIntersectsSegment(g.player.pos, g.player.dir, wall); hit {
-			if dist < 0.5 {
-				move := subXY(oldPlayer.pos, g.player.pos)
-				newMove := clipMovement(move, movementDirection(wall))
+			if dist < playerSize {
+				playerMove := subXY(oldPlayer.pos, g.player.pos)
+				newMove := clipMovement(playerMove, movementDirection(wall))
 				newPos := addXY(oldPlayer.pos, newMove)
 				g.player.pos = newPos
+				return nil
 			}
 		}
 	}
