@@ -199,7 +199,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 func main() {
 	//walls = BoxToVectors(1, 1, 10, 10)
 	//walls = append(walls, BoxToVectors(5, 5, 1, 1)...)
-	fmt.Println(walls)
+	//fmt.Println(walls)
 
 	game := &Game{
 		player: Player{
