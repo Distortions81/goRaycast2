@@ -3,32 +3,39 @@ package main
 import "math"
 
 // Dot product of two 2D vectors
-func dot(v1, v2 XY64) float64 {
+func dotXY(v1, v2 XY64) float64 {
 	return v1.X*v2.X + v1.Y*v2.Y
 }
 
 // Subtract two vectors
-func subtract(v1, v2 XY64) XY64 {
+func subXY(v1, v2 XY64) XY64 {
 	return XY64{v1.X - v2.X, v1.Y - v2.Y}
 }
 
 // Subtract two vectors
-func add(v1, v2 XY64) XY64 {
+func addXY(v1, v2 XY64) XY64 {
 	return XY64{v1.X + v2.X, v1.Y + v2.Y}
 }
 
 // Scale a vector by a scalar
-func scale(v XY64, scalar float64) XY64 {
+func scaleXY(v XY64, scalar float64) XY64 {
 	return XY64{v.X * scalar, v.Y * scalar}
 }
 
 // Normalize a vector
-func normalize(v XY64) XY64 {
+func normalizeXY(v XY64) XY64 {
 	magnitude := math.Sqrt(v.X*v.X + v.Y*v.Y)
 	if magnitude == 0 {
 		return XY64{0, 0}
 	}
 	return XY64{v.X / magnitude, v.Y / magnitude}
+}
+
+func movementDirection(wall Vec64) XY64 {
+	return XY64{
+		X: wall.X2 - wall.X1,
+		Y: wall.Y2 - wall.Y1,
+	}
 }
 
 // func rayIntersectsSegment(px, py, rayDirX, rayDirY float64, wall Vec64) (float64, bool) {

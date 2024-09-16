@@ -44,9 +44,9 @@ func (g *Game) Update() error {
 	for _, wall := range walls {
 		if dist, hit := rayIntersectsSegment(g.player.pos, g.player.dir, wall); hit {
 			if dist < 0.5 {
-				move := subtract(oldPlayer.pos, g.player.pos)
-				newMove := clipMovement(move, XY64{X: wall.X1, Y: wall.Y1})
-				newPos := add(oldPlayer.pos, newMove)
+				move := subXY(oldPlayer.pos, g.player.pos)
+				newMove := clipMovement(move, movementDirection(wall))
+				newPos := addXY(oldPlayer.pos, newMove)
 				g.player.pos = newPos
 			}
 		}
@@ -56,13 +56,13 @@ func (g *Game) Update() error {
 
 func clipMovement(movement, collisionNormal XY64) XY64 {
 	// Normalize the collision normal
-	normal := normalize(collisionNormal)
+	normal := normalizeXY(collisionNormal)
 
 	// Project movement onto the normal (component to block)
-	projection := scale(normal, dot(movement, normal))
+	projection := scaleXY(normal, dotXY(movement, normal))
 
 	// Subtract projection from the movement to get the clipped movement
-	clippedMovement := subtract(movement, projection)
+	clippedMovement := subXY(movement, projection)
 
 	return clippedMovement
 }
