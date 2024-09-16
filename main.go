@@ -20,8 +20,8 @@ var worldMap = [mapWidth][mapHeight]int{
 	{1, 1, 1, 1, 1, 1, 1, 1},
 	{1, 0, 0, 0, 0, 0, 0, 1},
 	{1, 0, 0, 0, 0, 0, 0, 1},
-	{1, 0, 0, 0, 0, 0, 0, 1},
-	{1, 0, 0, 0, 0, 0, 0, 1},
+	{1, 0, 0, 0, 1, 0, 0, 1},
+	{1, 0, 0, 1, 0, 0, 0, 1},
 	{1, 0, 0, 0, 0, 0, 0, 1},
 	{1, 0, 0, 0, 0, 0, 0, 1},
 	{1, 1, 1, 1, 1, 1, 1, 1},
@@ -148,14 +148,23 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			drawEnd = screenHeight - 1
 		}
 
-		var wallColor color.Color
+		var wallColor color.NRGBA
 		if side == 0 {
-			wallColor = colornames.Red
+			wallColor = color.NRGBA{255, 0, 0, 0}
 		} else if side == 1 {
-			wallColor = colornames.Darkred
+			wallColor = color.NRGBA{182, 0, 0, 0}
 		} else {
 			return
 		}
+
+		ldist := (perpWallDist * 3)
+		dist := 255 - (ldist*ldist)/2
+		if dist > 255 {
+			dist = 255
+		} else if dist < 0 {
+			dist = 0
+		}
+		wallColor.A = uint8(dist)
 
 		vector.DrawFilledRect(screen, float32(x), float32(drawStart), 1, float32(drawEnd-drawStart), wallColor, false)
 
