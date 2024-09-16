@@ -20,8 +20,8 @@ var worldMap = [mapWidth][mapHeight]int{
 	{1, 1, 1, 1, 1, 1, 1, 1},
 	{1, 0, 0, 0, 0, 0, 0, 1},
 	{1, 0, 0, 0, 0, 0, 0, 1},
-	{1, 0, 0, 0, 1, 0, 0, 1},
-	{1, 0, 0, 1, 0, 0, 0, 1},
+	{1, 0, 0, 0, 120, 0, 0, 1},
+	{1, 0, 0, 180, 0, 0, 0, 1},
 	{1, 0, 0, 0, 0, 0, 0, 1},
 	{1, 0, 0, 0, 0, 0, 0, 1},
 	{1, 1, 1, 1, 1, 1, 1, 1},
@@ -35,30 +35,32 @@ type Game struct {
 	player Player
 }
 
+const turnSpeed = 0.05
+
 func (g *Game) Update() error {
 	if ebiten.IsKeyPressed(ebiten.KeyW) {
-		g.player.posX += g.player.dirX * 0.1
-		g.player.posY += g.player.dirY * 0.1
+		g.player.posX += g.player.dirX * turnSpeed
+		g.player.posY += g.player.dirY * turnSpeed
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyS) {
-		g.player.posX -= g.player.dirX * 0.1
-		g.player.posY -= g.player.dirY * 0.1
+		g.player.posX -= g.player.dirX * turnSpeed
+		g.player.posY -= g.player.dirY * turnSpeed
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyA) {
 		oldDirX := g.player.dirX
-		g.player.dirX = g.player.dirX*math.Cos(0.1) - g.player.dirY*math.Sin(0.1)
-		g.player.dirY = oldDirX*math.Sin(0.1) + g.player.dirY*math.Cos(0.1)
+		g.player.dirX = g.player.dirX*math.Cos(turnSpeed) - g.player.dirY*math.Sin(turnSpeed)
+		g.player.dirY = oldDirX*math.Sin(turnSpeed) + g.player.dirY*math.Cos(turnSpeed)
 		oldPlaneX := g.player.planeX
-		g.player.planeX = g.player.planeX*math.Cos(0.1) - g.player.planeY*math.Sin(0.1)
-		g.player.planeY = oldPlaneX*math.Sin(0.1) + g.player.planeY*math.Cos(0.1)
+		g.player.planeX = g.player.planeX*math.Cos(turnSpeed) - g.player.planeY*math.Sin(turnSpeed)
+		g.player.planeY = oldPlaneX*math.Sin(turnSpeed) + g.player.planeY*math.Cos(turnSpeed)
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyD) {
 		oldDirX := g.player.dirX
-		g.player.dirX = g.player.dirX*math.Cos(-0.1) - g.player.dirY*math.Sin(-0.1)
-		g.player.dirY = oldDirX*math.Sin(-0.1) + g.player.dirY*math.Cos(-0.1)
+		g.player.dirX = g.player.dirX*math.Cos(-turnSpeed) - g.player.dirY*math.Sin(-turnSpeed)
+		g.player.dirY = oldDirX*math.Sin(-turnSpeed) + g.player.dirY*math.Cos(-turnSpeed)
 		oldPlaneX := g.player.planeX
-		g.player.planeX = g.player.planeX*math.Cos(-0.1) - g.player.planeY*math.Sin(-0.1)
-		g.player.planeY = oldPlaneX*math.Sin(-0.1) + g.player.planeY*math.Cos(-0.1)
+		g.player.planeX = g.player.planeX*math.Cos(-turnSpeed) - g.player.planeY*math.Sin(-turnSpeed)
+		g.player.planeY = oldPlaneX*math.Sin(-turnSpeed) + g.player.planeY*math.Cos(-turnSpeed)
 	}
 	return nil
 }
@@ -150,9 +152,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 		var wallColor color.NRGBA
 		if side == 0 {
-			wallColor = color.NRGBA{255, 0, 0, 0}
+			wallColor = HSVtoRGB(float64(worldMap[mapX][mapY]), 1.0, 1.0)
 		} else if side == 1 {
-			wallColor = color.NRGBA{182, 0, 0, 0}
+			wallColor = HSVtoRGB(float64(worldMap[mapX][mapY]), 1.0, 0.7)
 		} else {
 			return
 		}
@@ -188,4 +190,34 @@ func main() {
 	if err := ebiten.RunGame(game); err != nil {
 		panic(err)
 	}
+}
+
+// HSVtoRGB converts HSV values to RGB
+func HSVtoRGB(h, s, v float64) color.NRGBA {
+	c := v * s
+	x := c * (1 - math.Abs(math.Mod(h/60.0, 2)-1))
+	m := v - c
+
+	var r1, g1, b1 float64
+
+	if h >= 0 && h < 60 {
+		r1, g1, b1 = c, x, 0
+	} else if h >= 60 && h < 120 {
+		r1, g1, b1 = x, c, 0
+	} else if h >= 120 && h < 180 {
+		r1, g1, b1 = 0, c, x
+	} else if h >= 180 && h < 240 {
+		r1, g1, b1 = 0, x, c
+	} else if h >= 240 && h < 300 {
+		r1, g1, b1 = x, 0, c
+	} else if h >= 300 && h < 360 {
+		r1, g1, b1 = c, 0, x
+	}
+
+	// Convert to RGB by adding m and scaling to the range of 0-255
+	r := (r1 + m) * 255
+	g := (g1 + m) * 255
+	b := (b1 + m) * 255
+
+	return color.NRGBA{R: uint8(r), G: uint8(g), B: uint8(b), A: 1}
 }
