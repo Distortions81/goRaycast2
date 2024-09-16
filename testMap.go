@@ -1,6 +1,6 @@
 package main
 
-var walls = []Vector{
+var walls = []Vec64{
 	// Outer boundary
 	{0.0, 0.0, 25.0, 0.0},
 	{25.0, 0.0, 25.0, 25.0},

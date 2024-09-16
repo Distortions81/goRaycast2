@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"image/color"
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -15,36 +16,24 @@ const (
 	screenHeight = 720
 )
 
-type Vector struct {
-	X1, Y1, X2, Y2 float64
-}
-
-type Player struct {
-	posX, posY, dirX, dirY, planeX, planeY float64
-}
-
-type Game struct {
-	player Player
-}
+var (
+	wallColor color.NRGBA = HSVtoRGB(1.0, 0, 1.0)
+)
 
 func (g *Game) Layout(w, h int) (int, int) {
 	return w, h
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	screen.Fill(colornames.Black)
-
-	wallColor := HSVtoRGB(1.0, 0, 1.0)
 
 	for x := 0; x < screenWidth; x++ {
 		cameraX := 2*float64(x)/float64(screenWidth) - 1
-		rayDirX := g.player.dirX + g.player.planeX*cameraX
-		rayDirY := g.player.dirY + g.player.planeY*cameraX
+		rayDir := XY64{X: g.player.dir.X + g.player.plane.X*cameraX, Y: g.player.dir.Y + g.player.plane.Y*cameraX}
 
 		//Need to optimize, this is a slow way to do this
 		nearestDist := math.MaxFloat64
 		for _, wall := range walls {
-			if dist, hit := rayIntersectsSegment(g.player.posX, g.player.posY, rayDirX, rayDirY, wall); hit {
+			if dist, hit := rayIntersectsSegment(g.player.pos, rayDir, wall); hit {
 				if dist < nearestDist {
 					nearestDist = dist
 				}
@@ -75,7 +64,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				drawEnd = screenHeight - 1
 			}
 
-			vector.DrawFilledRect(screen, float32(x), float32(drawStart), 1, float32(drawEnd-drawStart), wallColor, false)
+			vector.StrokeLine(screen, float32(x), float32(drawStart), float32(x), float32(drawEnd), 1, wallColor, false)
 		}
 
 	}
@@ -90,10 +79,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 		x1, y1, x2, y2 = mapOff+x1*mapMag, mapOff+y1*mapMag, mapOff+x2*mapMag, mapOff+y2*mapMag
 
-		// Draw lines as filled rectangles
 		vector.StrokeLine(screen, x1, y1, x2, y2, 1, colornames.Teal, false)
 	}
-	vector.DrawFilledCircle(screen, mapOff+float32(g.player.posX)*mapMag, mapOff+float32(g.player.posY)*mapMag, 5, colornames.Yellow, false)
+	vector.DrawFilledCircle(screen, mapOff+float32(g.player.pos.X)*mapMag, mapOff+float32(g.player.pos.Y)*mapMag, 5, colornames.Yellow, false)
 
 	ebitenutil.DebugPrint(screen, fmt.Sprintf("FPS: %v", int(ebiten.ActualFPS())))
 }
@@ -104,7 +92,7 @@ func main() {
 
 	game := &Game{
 		player: Player{
-			posX: 3, posY: 3, dirX: -1, dirY: -0.25, planeX: -0.15, planeY: 0.65,
+			pos: XY64{X: 3, Y: 3}, dir: XY64{X: -1, Y: -0.25}, plane: XY64{X: -0.15, Y: 0.65},
 		},
 	}
 
