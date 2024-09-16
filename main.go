@@ -20,7 +20,37 @@ type Vector struct {
 	X1, Y1, X2, Y2 float64
 }
 
-var walls = []Vector{}
+var walls = []Vector{
+	// Outer boundaries of the level
+	{0.0, 0.0, 128.0, 0.0},
+	{128.0, 0.0, 128.0, 128.0},
+	{128.0, 128.0, 0.0, 128.0},
+	{0.0, 128.0, 0.0, 0.0},
+
+	// Inner boundaries (rooms, corridors, etc.)
+	// Example of a central area
+	{16.0, 16.0, 64.0, 16.0},
+	{64.0, 16.0, 64.0, 64.0},
+	{64.0, 64.0, 16.0, 64.0},
+	{16.0, 64.0, 16.0, 16.0},
+
+	// Corridor and room boundaries
+	{16.0, 48.0, 48.0, 48.0},
+	{48.0, 48.0, 48.0, 64.0},
+	{48.0, 64.0, 16.0, 64.0},
+	{16.0, 64.0, 16.0, 48.0},
+
+	{32.0, 0.0, 32.0, 64.0},
+	{0.0, 32.0, 128.0, 32.0},
+
+	// Additional internal details, if necessary
+	{32.0, 32.0, 48.0, 32.0},
+	{48.0, 32.0, 48.0, 48.0},
+	{48.0, 48.0, 32.0, 48.0},
+	{32.0, 48.0, 32.0, 32.0},
+
+	// More vectors could be added to match detailed layout
+}
 
 func BoxToVectors(x, y, width, height float64) []Vector {
 	// Define the four corners of the box
@@ -117,8 +147,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		if nearestDist < math.MaxFloat64 {
 			wallColor := HSVtoRGB(1.0, 1.0, 1.0)
 
-			ldist := (nearestDist * 2)
-			dist := 255 - (ldist*ldist)/2
+			ldist := (nearestDist)
+			dist := 255 - (ldist*ldist)/5
 			if dist > 255 {
 				dist = 255
 			} else if dist < 0 {
@@ -138,7 +168,23 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 			vector.DrawFilledRect(screen, float32(x), float32(drawStart), 1, float32(drawEnd-drawStart), wallColor, false)
 		}
+
 	}
+
+	const mag = 10
+
+	for _, v := range walls {
+		// Convert vector coordinates to screen coordinates
+		x1, y1 := float32(v.X1), float32(v.Y1)
+		x2, y2 := float32(v.X2), float32(v.Y2)
+
+		x1, y1, x2, y2 = x1*mag, y1*mag, x2*mag, y2*mag
+
+		// Draw lines as filled rectangles
+		vector.StrokeLine(screen, x1, y1, x2, y2, 1, colornames.Teal, false)
+	}
+	vector.DrawFilledCircle(screen, float32(g.player.posX)*mag, float32(g.player.posY)*mag, 5, colornames.Yellow, false)
+
 	ebitenutil.DebugPrint(screen, fmt.Sprintf("FPS: %v", int(ebiten.ActualFPS())))
 }
 
