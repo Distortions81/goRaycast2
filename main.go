@@ -153,8 +153,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			wallColor = colornames.Red
 		} else if side == 1 {
 			wallColor = colornames.Darkred
-		} else if side == -1 {
-			wallColor = colornames.Black
+		} else {
+			return
 		}
 
 		vector.DrawFilledRect(screen, float32(x), float32(drawStart), 1, float32(drawEnd-drawStart), wallColor, false)
