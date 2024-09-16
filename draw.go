@@ -15,13 +15,16 @@ const (
 	miniMapSize    = 5
 	miniMapOffset  = 5
 	lightIntensity = 500
+	lightDither    = true
 )
 
 var (
-	wallColor color.NRGBA = HSVtoRGB(180, 0.9, 0.25)
+	wallColor   color.NRGBA = HSVtoRGB(180, 0.9, 0.25)
+	frameNumber int
 )
 
 func (g *Game) Draw(screen *ebiten.Image) {
+	frameNumber++
 
 	for x := 0; x < screenWidth; x++ {
 		cameraX := 2*float64(x)/float64(screenWidth) - 1
@@ -43,6 +46,14 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			// Calculate color with light falloff and gamma correction
 			valFloat := applyFalloff(nearestDist, lightIntensity, (float64(wallColor.R+wallColor.G+wallColor.B) / 765 / 3.0))
 			wallColor.A = uint8(valFloat * 255)
+
+			if lightDither {
+				if frameNumber%2 == 0 {
+					if wallColor.A > 0 && wallColor.A != 255 {
+						wallColor.A = wallColor.A - 2
+					}
+				}
+			}
 
 			lineHeight := int(float64(screenHeight) / nearestDist)
 			drawStart := -lineHeight/2 + screenHeight/2
