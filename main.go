@@ -178,8 +178,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	}
 
-	const mapMag = 20
-	const mapOff = 25
+	const mapMag = 10
+	const mapOff = 10
 
 	for _, v := range walls {
 		// Convert vector coordinates to screen coordinates
