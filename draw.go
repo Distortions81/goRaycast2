@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	miniMapSize    = 10
-	miniMapOffset  = 10
+	miniMapSize    = 5
+	miniMapOffset  = 5
 	lightIntensity = 500
 )
 
