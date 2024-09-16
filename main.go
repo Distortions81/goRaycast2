@@ -41,32 +41,33 @@ type Game struct {
 	player Player
 }
 
-const pSpeed = 0.05
+const turnSpeed = 0.03
+const moveSpeed = 0.1
 
 func (g *Game) Update() error {
 	if ebiten.IsKeyPressed(ebiten.KeyS) {
-		g.player.posX += g.player.dirX * pSpeed
-		g.player.posY += g.player.dirY * pSpeed
+		g.player.posX += g.player.dirX * moveSpeed
+		g.player.posY += g.player.dirY * moveSpeed
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyW) {
-		g.player.posX -= g.player.dirX * pSpeed
-		g.player.posY -= g.player.dirY * pSpeed
+		g.player.posX -= g.player.dirX * moveSpeed
+		g.player.posY -= g.player.dirY * moveSpeed
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyA) {
 		oldDirX := g.player.dirX
-		g.player.dirX = g.player.dirX*math.Cos(pSpeed) - g.player.dirY*math.Sin(pSpeed)
-		g.player.dirY = oldDirX*math.Sin(pSpeed) + g.player.dirY*math.Cos(pSpeed)
+		g.player.dirX = g.player.dirX*math.Cos(turnSpeed) - g.player.dirY*math.Sin(turnSpeed)
+		g.player.dirY = oldDirX*math.Sin(turnSpeed) + g.player.dirY*math.Cos(turnSpeed)
 		oldPlaneX := g.player.planeX
-		g.player.planeX = g.player.planeX*math.Cos(pSpeed) - g.player.planeY*math.Sin(pSpeed)
-		g.player.planeY = oldPlaneX*math.Sin(pSpeed) + g.player.planeY*math.Cos(pSpeed)
+		g.player.planeX = g.player.planeX*math.Cos(turnSpeed) - g.player.planeY*math.Sin(turnSpeed)
+		g.player.planeY = oldPlaneX*math.Sin(turnSpeed) + g.player.planeY*math.Cos(turnSpeed)
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyD) {
 		oldDirX := g.player.dirX
-		g.player.dirX = g.player.dirX*math.Cos(-pSpeed) - g.player.dirY*math.Sin(-pSpeed)
-		g.player.dirY = oldDirX*math.Sin(-pSpeed) + g.player.dirY*math.Cos(-pSpeed)
+		g.player.dirX = g.player.dirX*math.Cos(-turnSpeed) - g.player.dirY*math.Sin(-turnSpeed)
+		g.player.dirY = oldDirX*math.Sin(-turnSpeed) + g.player.dirY*math.Cos(-turnSpeed)
 		oldPlaneX := g.player.planeX
-		g.player.planeX = g.player.planeX*math.Cos(-pSpeed) - g.player.planeY*math.Sin(-pSpeed)
-		g.player.planeY = oldPlaneX*math.Sin(-pSpeed) + g.player.planeY*math.Cos(-pSpeed)
+		g.player.planeX = g.player.planeX*math.Cos(-turnSpeed) - g.player.planeY*math.Sin(-turnSpeed)
+		g.player.planeY = oldPlaneX*math.Sin(-turnSpeed) + g.player.planeY*math.Cos(-turnSpeed)
 	}
 	return nil
 }
@@ -157,6 +158,7 @@ func main() {
 		},
 	}
 
+	ebiten.SetVsyncEnabled(false)
 	ebiten.SetWindowSize(screenWidth, screenHeight)
 	ebiten.SetWindowTitle("Raycaster with Vectors")
 	if err := ebiten.RunGame(game); err != nil {
