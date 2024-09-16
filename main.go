@@ -1,6 +1,7 @@
 package main
 
 import (
+	"image/color"
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -109,6 +110,22 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				mapY += stepY
 				side = 1
 			}
+
+			if mapX >= mapWidth {
+				side = -1
+				break
+			} else if mapX < 0 {
+				side = -1
+				break
+			}
+			if mapY >= mapHeight {
+				side = -1
+				break
+			} else if mapY < 0 {
+				side = -1
+				break
+			}
+
 			if worldMap[mapX][mapY] > 0 {
 				hit = 1
 			}
@@ -131,9 +148,13 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			drawEnd = screenHeight - 1
 		}
 
-		wallColor := colornames.Red
-		if side == 1 {
+		var wallColor color.Color
+		if side == 0 {
+			wallColor = colornames.Red
+		} else if side == 1 {
 			wallColor = colornames.Darkred
+		} else if side == -1 {
+			wallColor = colornames.Black
 		}
 
 		vector.DrawFilledRect(screen, float32(x), float32(drawStart), 1, float32(drawEnd-drawStart), wallColor, false)
