@@ -21,35 +21,39 @@ type Vector struct {
 }
 
 var walls = []Vector{
-	// Outer boundaries of the level
-	{0.0, 0.0, 128.0, 0.0},
-	{128.0, 0.0, 128.0, 128.0},
-	{128.0, 128.0, 0.0, 128.0},
-	{0.0, 128.0, 0.0, 0.0},
+	// Outer boundary
+	{0.0, 0.0, 25.0, 0.0},
+	{25.0, 0.0, 25.0, 25.0},
+	{25.0, 25.0, 0.0, 25.0},
+	{0.0, 25.0, 0.0, 0.0},
 
-	// Inner boundaries (rooms, corridors, etc.)
-	// Example of a central area
-	{16.0, 16.0, 64.0, 16.0},
-	{64.0, 16.0, 64.0, 64.0},
-	{64.0, 64.0, 16.0, 64.0},
-	{16.0, 64.0, 16.0, 16.0},
+	// Main corridor
+	{2.5, 2.5, 22.5, 2.5},
+	{22.5, 2.5, 22.5, 22.5},
+	{22.5, 22.5, 2.5, 22.5},
+	{2.5, 22.5, 2.5, 2.5},
 
-	// Corridor and room boundaries
-	{16.0, 48.0, 48.0, 48.0},
-	{48.0, 48.0, 48.0, 64.0},
-	{48.0, 64.0, 16.0, 64.0},
-	{16.0, 64.0, 16.0, 48.0},
+	// Rooms
+	{5.0, 5.0, 10.0, 5.0},
+	{10.0, 5.0, 10.0, 10.0},
+	{10.0, 10.0, 5.0, 10.0},
+	{5.0, 10.0, 5.0, 5.0},
 
-	{32.0, 0.0, 32.0, 64.0},
-	{0.0, 32.0, 128.0, 32.0},
+	{15.0, 5.0, 20.0, 5.0},
+	{20.0, 5.0, 20.0, 10.0},
+	{20.0, 10.0, 15.0, 10.0},
+	{15.0, 10.0, 15.0, 5.0},
 
-	// Additional internal details, if necessary
-	{32.0, 32.0, 48.0, 32.0},
-	{48.0, 32.0, 48.0, 48.0},
-	{48.0, 48.0, 32.0, 48.0},
-	{32.0, 48.0, 32.0, 32.0},
+	// Additional corridors
+	{5.0, 15.0, 10.0, 15.0},
+	{10.0, 15.0, 10.0, 20.0},
+	{10.0, 20.0, 5.0, 20.0},
+	{5.0, 20.0, 5.0, 15.0},
 
-	// More vectors could be added to match detailed layout
+	{15.0, 15.0, 20.0, 15.0},
+	{20.0, 15.0, 20.0, 20.0},
+	{20.0, 20.0, 15.0, 20.0},
+	{15.0, 20.0, 15.0, 15.0},
 }
 
 func BoxToVectors(x, y, width, height float64) []Vector {
@@ -98,6 +102,9 @@ func (g *Game) Update() error {
 		oldPlaneX := g.player.planeX
 		g.player.planeX = g.player.planeX*math.Cos(-turnSpeed) - g.player.planeY*math.Sin(-turnSpeed)
 		g.player.planeY = oldPlaneX*math.Sin(-turnSpeed) + g.player.planeY*math.Cos(-turnSpeed)
+	}
+	if ebiten.IsKeyPressed(ebiten.Key0) {
+		fmt.Printf("posX: %v, posY: %v, dirX: %v, dirY: %v, planeX: %v, planeY: %v\n", g.player.posX, g.player.posY, g.player.dirX, g.player.dirY, g.player.planeX, g.player.planeY)
 	}
 	return nil
 }
@@ -148,7 +155,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			wallColor := HSVtoRGB(1.0, 1.0, 1.0)
 
 			ldist := (nearestDist)
-			dist := 255 - (ldist*ldist)/5
+			dist := 255 - (ldist*ldist)/2
 			if dist > 255 {
 				dist = 255
 			} else if dist < 0 {
@@ -171,40 +178,36 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	}
 
-	const mag = 10
+	const mapMag = 20
+	const mapOff = 25
 
 	for _, v := range walls {
 		// Convert vector coordinates to screen coordinates
 		x1, y1 := float32(v.X1), float32(v.Y1)
 		x2, y2 := float32(v.X2), float32(v.Y2)
 
-		x1, y1, x2, y2 = x1*mag, y1*mag, x2*mag, y2*mag
+		x1, y1, x2, y2 = mapOff+x1*mapMag, mapOff+y1*mapMag, mapOff+x2*mapMag, mapOff+y2*mapMag
 
 		// Draw lines as filled rectangles
 		vector.StrokeLine(screen, x1, y1, x2, y2, 1, colornames.Teal, false)
 	}
-	vector.DrawFilledCircle(screen, float32(g.player.posX)*mag, float32(g.player.posY)*mag, 5, colornames.Yellow, false)
+	vector.DrawFilledCircle(screen, mapOff+float32(g.player.posX)*mapMag, mapOff+float32(g.player.posY)*mapMag, 5, colornames.Yellow, false)
 
 	ebitenutil.DebugPrint(screen, fmt.Sprintf("FPS: %v", int(ebiten.ActualFPS())))
 }
 
 func main() {
-	walls = BoxToVectors(1, 1, 10, 10)
-	walls = append(walls, BoxToVectors(5, 5, 1, 1)...)
+	//walls = BoxToVectors(1, 1, 10, 10)
+	//walls = append(walls, BoxToVectors(5, 5, 1, 1)...)
 	fmt.Println(walls)
 
 	game := &Game{
 		player: Player{
-			posX:   2.0,
-			posY:   2.0,
-			dirX:   -1.0,
-			dirY:   0.0,
-			planeX: 0.0,
-			planeY: 0.66,
+			posX: 2.986815779357488, posY: 3.0406601123043306, dirX: -0.9751973713086025, dirY: -0.22133704387836103, planeX: -0.14608244895971825, planeY: 0.6436302650636798,
 		},
 	}
 
-	ebiten.SetVsyncEnabled(false)
+	ebiten.SetVsyncEnabled(true)
 	ebiten.SetWindowSize(screenWidth, screenHeight)
 	ebiten.SetWindowTitle("Raycaster with Vectors")
 	if err := ebiten.RunGame(game); err != nil {
