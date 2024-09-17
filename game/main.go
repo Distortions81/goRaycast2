@@ -50,12 +50,13 @@ func main() {
 }
 
 func readVecs() {
+
 	data, err := os.ReadFile(levelPath)
 	if err != nil {
 		log.Fatalln("Unable to read " + levelPath)
 	}
 
-	walls = []Vec64{}
+	tmp := []Vec64{}
 	text := string(data)
 	lines := strings.Split(text, "\n")
 
@@ -69,6 +70,10 @@ func readVecs() {
 		x2, _ := strconv.ParseFloat(args[2], 64)
 		y2, _ := strconv.ParseFloat(args[3], 64)
 
-		walls = append(walls, Vec64{X1: x1 / mapScaleDiv, Y1: y1 / mapScaleDiv, X2: x2 / mapScaleDiv, Y2: y2 / mapScaleDiv})
+		tmp = append(tmp, Vec64{X1: x1 / mapScaleDiv, Y1: y1 / mapScaleDiv, X2: x2 / mapScaleDiv, Y2: y2 / mapScaleDiv})
 	}
+
+	renderLock.Lock()
+	walls = tmp
+	defer renderLock.Unlock()
 }

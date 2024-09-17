@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image/color"
 	"math"
+	"sync"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -16,8 +17,8 @@ const (
 	miniMapOffset   = 20
 	lightIntensity  = 1000
 	lightDither     = true
-	occlusionRadius = 20.0 // Adjust as needed
-	numSamples      = 8    // Number of samples to take around each pixel
+	occlusionRadius = 2.0 // Adjust as needed
+	numSamples      = 32  // Number of samples to take around each pixel
 )
 
 var (
@@ -25,7 +26,12 @@ var (
 	frameNumber int
 )
 
+var renderLock sync.Mutex
+
 func (g *Game) Draw(screen *ebiten.Image) {
+	renderLock.Lock()
+	defer renderLock.Unlock()
+
 	frameNumber++
 
 	for x := 0; x < screenWidth; x++ {
@@ -69,30 +75,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				drawEnd = screenHeight - 1
 			}
 
-			// Apply ambient occlusion
-			occlusionFactor := 0.0
-			for i := 0; i < numSamples; i++ {
-				angle := 2 * math.Pi * float64(i) / float64(numSamples)
-				sampleX := float64(x) + occlusionRadius*math.Cos(angle)
-				sampleY := float64(drawStart) + occlusionRadius*math.Sin(angle)
-
-				// Check if the sampled point is within bounds
-				if sampleX >= 0 && sampleX < float64(screenWidth) && sampleY >= 0 && sampleY < float64(screenHeight) {
-					// Cast a ray to the sampled point
-					rayDir := angleToXY(player.angle+math.Atan2(sampleY-float64(drawStart), sampleX-float64(x)), 1)
-					if dist, hit := rayIntersectsSegment(player.pos, rayDir, wall); hit && dist < occlusionRadius {
-						occlusionFactor += 1.0 / float64(numSamples)
-					}
-				}
-			}
-
-			occludedColor := wallColor
-			occludedColor.R = uint8(float64(wallColor.R) * (1 - occlusionFactor))
-			occludedColor.G = uint8(float64(wallColor.G) * (1 - occlusionFactor))
-			occludedColor.B = uint8(float64(wallColor.B) * (1 - occlusionFactor))
-
 			// Draw the line representing the wall column
-			vector.StrokeLine(screen, float32(x), float32(drawStart), float32(x), float32(drawEnd), 1, occludedColor, false)
+			vector.StrokeLine(screen, float32(x), float32(drawStart), float32(x), float32(drawEnd), 1, wallColor, false)
 		}
 	}
 
