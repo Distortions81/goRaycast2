@@ -11,7 +11,7 @@ const (
 	lineWidth    = 2
 	scaleDiv     = 1
 	gridSpacing  = 10
-	levelPath    = "../editor/vecs.txt"
+	levelPath    = "../level1.txt"
 	gridBright   = 16
 )
 

@@ -14,7 +14,7 @@ const (
 	screenWidth  = 1280
 	screenHeight = 720
 	mapScaleDiv  = 50
-	levelPath    = "../editor/vecs.txt"
+	levelPath    = "../level1.txt"
 )
 
 var walls = []Vec64{}

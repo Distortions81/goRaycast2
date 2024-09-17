@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -21,7 +20,7 @@ func (g *Game) writeVecs() {
 func readVecs() {
 	data, err := os.ReadFile(levelPath)
 	if err != nil {
-		log.Fatalln("Unable to read " + levelPath)
+		fmt.Printf("Unable to read %v\n", levelPath)
 	}
 
 	walls = []Vector2D{}
