@@ -16,10 +16,13 @@ type XY32 struct {
 	X, Y float64
 }
 
-type Player struct {
-	pos, dir, plane XY64
+type playerData struct {
+	pos      XY64
+	velocity XY64
+	size     float64
+	angle    float64
+	speed    float64
 }
 
 type Game struct {
-	player Player
 }

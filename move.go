@@ -1,60 +1,54 @@
 package main
 
 import (
-	"fmt"
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
 const (
-	turnSpeed  = 0.03
-	moveSpeed  = 0.1
+	moveSpeed  = 0.02
+	turnSpeed  = 0.05
 	playerSize = 0.5
+
+	friction = 0.009
+	maxSpeed = 0.1
 )
 
+var player playerData
+
 func (g *Game) Update() error {
-	oldPlayer := g.player
 	if ebiten.IsKeyPressed(ebiten.KeyS) {
-		g.player.pos.X += g.player.dir.X * moveSpeed
-		g.player.pos.Y += g.player.dir.Y * moveSpeed
-
-	}
-	if ebiten.IsKeyPressed(ebiten.KeyW) {
-		g.player.pos.X -= g.player.dir.X * moveSpeed
-		g.player.pos.Y -= g.player.dir.Y * moveSpeed
-	}
-	if ebiten.IsKeyPressed(ebiten.KeyA) {
-		oldDirX := g.player.dir.X
-		g.player.dir.X = g.player.dir.X*math.Cos(turnSpeed) - g.player.dir.Y*math.Sin(turnSpeed)
-		g.player.dir.Y = oldDirX*math.Sin(turnSpeed) + g.player.dir.Y*math.Cos(turnSpeed)
-		oldPlaneX := g.player.plane.X
-		g.player.plane.X = g.player.plane.X*math.Cos(turnSpeed) - g.player.plane.Y*math.Sin(turnSpeed)
-		g.player.plane.Y = oldPlaneX*math.Sin(turnSpeed) + g.player.plane.Y*math.Cos(turnSpeed)
-	}
-	if ebiten.IsKeyPressed(ebiten.KeyD) {
-		oldDirX := g.player.dir.X
-		g.player.dir.X = g.player.dir.X*math.Cos(-turnSpeed) - g.player.dir.Y*math.Sin(-turnSpeed)
-		g.player.dir.Y = oldDirX*math.Sin(-turnSpeed) + g.player.dir.Y*math.Cos(-turnSpeed)
-		oldPlaneX := g.player.plane.X
-		g.player.plane.X = g.player.plane.X*math.Cos(-turnSpeed) - g.player.plane.Y*math.Sin(-turnSpeed)
-		g.player.plane.Y = oldPlaneX*math.Sin(-turnSpeed) + g.player.plane.Y*math.Cos(-turnSpeed)
-	}
-	if ebiten.IsKeyPressed(ebiten.Key0) {
-		fmt.Printf("posX: %v, posY: %v, dirX: %v, dirY: %v, planeX: %v, planeY: %v\n", g.player.pos.X, g.player.pos.Y, g.player.dir.X, g.player.dir.Y, g.player.plane.X, g.player.plane.Y)
-	}
-
-	for _, wall := range walls {
-		if dist, hit := rayIntersectsSegment(g.player.pos, g.player.dir, wall); hit {
-			if dist < playerSize {
-				playerMove := subXY(oldPlayer.pos, g.player.pos)
-				newMove := clipMovement(playerMove, movementDirection(wall))
-				newPos := addXY(oldPlayer.pos, newMove)
-				g.player.pos = newPos
-				return nil
+		if player.speed < maxSpeed {
+			player.speed += moveSpeed
+		}
+	} else if ebiten.IsKeyPressed(ebiten.KeyW) {
+		if player.speed > -maxSpeed {
+			player.speed -= moveSpeed
+		}
+	} else {
+		if player.speed > 0 {
+			if player.speed < friction {
+				player.speed = 0
 			}
+			player.speed -= friction
+		} else if player.speed < 0 {
+			if player.speed > -friction {
+				player.speed = 0
+			}
+			player.speed += friction
 		}
 	}
+	if ebiten.IsKeyPressed(ebiten.KeyA) {
+		player.angle -= turnSpeed
+	}
+	if ebiten.IsKeyPressed(ebiten.KeyD) {
+		player.angle += turnSpeed
+	}
+
+	player.velocity = AngleToVelocity(player.angle, player.speed)
+
+	player.pos = addXY(player.pos, player.velocity)
 	return nil
 }
 
@@ -69,4 +63,12 @@ func clipMovement(movement, collisionNormal XY64) XY64 {
 	clippedMovement := subXY(movement, projection)
 
 	return clippedMovement
+}
+
+// Function to convert an angle in radians to a velocity vector with momentum
+func AngleToVelocity(angle float64, magnitude float64) XY64 {
+	// Calculate X and Y components using trigonometry
+	vx := magnitude * math.Cos(angle)
+	vy := magnitude * math.Sin(angle)
+	return XY64{X: vx, Y: vy}
 }

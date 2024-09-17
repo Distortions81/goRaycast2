@@ -28,12 +28,12 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	for x := 0; x < screenWidth; x++ {
 		cameraX := 2*float64(x)/float64(screenWidth) - 1
-		rayDir := XY64{X: g.player.dir.X + g.player.plane.X*cameraX, Y: g.player.dir.Y + g.player.plane.Y*cameraX}
+		rayDir := AngleToVelocity(player.angle+cameraX, 1)
 
 		//Need to optimize, this is a slow way to do this
 		nearestDist := math.MaxFloat64
 		for _, wall := range walls {
-			if dist, hit := rayIntersectsSegment(g.player.pos, rayDir, wall); hit {
+			if dist, hit := rayIntersectsSegment(player.pos, rayDir, wall); hit {
 				if dist < nearestDist {
 					nearestDist = dist
 				}
@@ -79,7 +79,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 		vector.StrokeLine(screen, x1, y1, x2, y2, 1, colornames.Teal, false)
 	}
-	vector.DrawFilledCircle(screen, miniMapOffset+float32(g.player.pos.X)*miniMapSize, miniMapOffset+float32(g.player.pos.Y)*miniMapSize, 5, colornames.Yellow, false)
+	vector.DrawFilledCircle(screen, miniMapOffset+float32(player.pos.X)*miniMapSize, miniMapOffset+float32(player.pos.Y)*miniMapSize, 5, colornames.Yellow, false)
 
-	ebitenutil.DebugPrint(screen, fmt.Sprintf("FPS: %v", int(ebiten.ActualFPS())))
+	ebitenutil.DebugPrint(screen, fmt.Sprintf("FPS: %v, vel: %3.2f,%3.2f, angle: %3.2f", int(ebiten.ActualFPS()), player.velocity.X, player.velocity.Y, player.angle))
 }
