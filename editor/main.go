@@ -13,7 +13,10 @@ import (
 	"golang.org/x/image/colornames"
 )
 
-const snapDistance = 10
+const (
+	snapDistance = 10
+	lineWidth    = 2
+)
 
 // Define a struct for a 2D vector with start and end points
 type Vector2D struct {
@@ -41,6 +44,7 @@ type Game struct {
 func (g *Game) Update() error {
 	mouseX, mouseY := ebiten.CursorPosition()
 	mpos := XY{X: float64(mouseX), Y: float64(mouseY)}
+	wpos := XY{X: mpos.X - g.camera.X, Y: mpos.Y - g.camera.Y}
 
 	if ebiten.IsKeyPressed(ebiten.KeyC) && !g.createMode {
 		g.createMode = true
@@ -49,16 +53,16 @@ func (g *Game) Update() error {
 		g.start = XY{X: 0, Y: 0}
 	} else if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 		if g.createMode {
+			snappedPos := SnapPosition(wpos, g.vectors, snapDistance)
 			if !g.secondClick && !g.firstClick {
-				snappedPos := SnapPosition(mpos, g.vectors, snapDistance)
 
 				// Start creating a new vector
 				g.start = snappedPos
 				g.firstClick = true
 			} else if g.firstClick && !g.secondClick {
 				// Finish creating the vector
-				endX := float64(mouseX) - g.camera.X
-				endY := float64(mouseY) - g.camera.Y
+				endX := snappedPos.X
+				endY := snappedPos.Y
 				g.vectors = append(g.vectors, Vector2D{
 					X1: g.start.X,
 					Y1: g.start.Y,
@@ -94,14 +98,20 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		y1 := vec.Y1 + g.camera.Y
 		x2 := vec.X2 + g.camera.X
 		y2 := vec.Y2 + g.camera.Y
-		vector.StrokeLine(vectorScreen, float32(x1), float32(y1), float32(x2), float32(y2), 1, color.White, true)
+		vector.StrokeLine(vectorScreen, float32(x1), float32(y1), float32(x2), float32(y2), lineWidth, color.White, true)
 	}
 
-	if g.createMode && g.firstClick && !g.secondClick {
+	if g.createMode {
 		mouseX, mouseY := ebiten.CursorPosition()
 		mpos := XY{X: float64(mouseX), Y: float64(mouseY)}
 		snappedPos := SnapPosition(mpos, g.vectors, snapDistance)
-		vector.StrokeLine(screen, float32(g.start.X), float32(g.start.Y), float32(snappedPos.X), float32(snappedPos.Y), 1, colornames.Red, true)
+
+		if g.createMode {
+			vector.DrawFilledCircle(screen, float32(snappedPos.X), float32(snappedPos.Y), lineWidth*2, colornames.Yellow, true)
+		}
+		if g.firstClick && !g.secondClick {
+			vector.StrokeLine(screen, float32(g.start.X), float32(g.start.Y), float32(snappedPos.X), float32(snappedPos.Y), lineWidth, colornames.Red, true)
+		}
 	}
 
 	// Draw the vector image onto the screen
