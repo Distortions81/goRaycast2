@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/color"
 	"math"
+	"os"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -16,6 +17,7 @@ import (
 const (
 	snapDistance = 10
 	lineWidth    = 2
+	scaleDiv     = 1
 )
 
 // Define a struct for a 2D vector with start and end points
@@ -70,6 +72,7 @@ func (g *Game) Update() error {
 					Y2: endY,
 				})
 				fmt.Printf("created: %v,%v - %v,%v\n", g.start.X, g.start.Y, endX, endY)
+				g.writeVecs()
 				g.secondClick = true
 				g.createMode = false
 			}
@@ -81,6 +84,16 @@ func (g *Game) Update() error {
 
 	g.lastMouse = mpos
 	return nil
+}
+
+func (g *Game) writeVecs() {
+	buf := ""
+
+	for _, item := range g.vectors {
+		buf = buf + fmt.Sprintf("%v,%v,%v,%v\n", item.X1/scaleDiv, item.Y1/scaleDiv, item.X2/scaleDiv, item.Y2/scaleDiv)
+	}
+
+	os.WriteFile("vecs.txt", []byte(buf), 0755)
 }
 
 // Draw is called every frame
