@@ -27,34 +27,35 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	frameNumber++
 
 	for x := 0; x < screenWidth; x++ {
+		// Map screen X to camera plane (-1 to 1)
 		cameraX := 2*float64(x)/float64(screenWidth) - 1
-		rayDir := angleToXY(player.angle+cameraX, 1)
 
-		//Need to optimize, this is a slow way to do this
+		// Adjust the ray direction based on player's current angle + offset from center view
+		rayDir := angleToXY(player.angle+math.Atan(cameraX), 1)
+
+		// Calculate distance to the nearest wall
 		nearestDist := math.MaxFloat64
 		for _, wall := range walls {
 			if dist, hit := rayIntersectsSegment(player.pos, rayDir, wall); hit {
-				if dist < nearestDist {
-					nearestDist = dist
+				// Correct the fisheye effect by adjusting with cos of angle offset
+				correctedDist := dist * math.Cos(math.Atan(cameraX))
+				if correctedDist < nearestDist {
+					nearestDist = correctedDist
 				}
 			}
 		}
 
 		if nearestDist < math.MaxFloat64 {
+			// Light falloff and gamma correction (unchanged)
 			wallColor := wallColor
-
-			// Calculate color with light falloff and gamma correction
-			valFloat := applyFalloff(nearestDist, lightIntensity, (float64(wallColor.R+wallColor.G+wallColor.B) / 765 / 3.0))
+			valFloat := applyFalloff(nearestDist, lightIntensity, float64(wallColor.R+wallColor.G+wallColor.B)/765.0/3.0)
 			wallColor.A = uint8(valFloat * 255)
 
-			if lightDither {
-				if frameNumber%2 == 0 {
-					if wallColor.A > 0 && wallColor.A != 255 {
-						wallColor.A = wallColor.A - 2
-					}
-				}
+			if lightDither && frameNumber%2 == 0 && wallColor.A > 0 && wallColor.A != 255 {
+				wallColor.A = wallColor.A - 2
 			}
 
+			// Draw the wall slice with corrected distance
 			lineHeight := int(float64(screenHeight) / nearestDist)
 			drawStart := -lineHeight/2 + screenHeight/2
 			if drawStart < 0 {
@@ -65,9 +66,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				drawEnd = screenHeight - 1
 			}
 
+			// Draw the line representing the wall column
 			vector.StrokeLine(screen, float32(x), float32(drawStart), float32(x), float32(drawEnd), 1, wallColor, false)
 		}
-
 	}
 
 	for _, v := range walls {
