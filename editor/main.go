@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"log"
 	"math"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -18,7 +21,10 @@ const (
 	snapDistance = 10
 	lineWidth    = 2
 	scaleDiv     = 1
+	levelPath    = "../editor/vecs.txt"
 )
+
+var walls = []Vector2D{}
 
 // Define a struct for a 2D vector with start and end points
 type Vector2D struct {
@@ -31,8 +37,6 @@ type XY struct {
 
 // Game struct to hold game state
 type Game struct {
-	vectors []Vector2D
-
 	camera,
 	start,
 	lastMouse XY
@@ -55,7 +59,7 @@ func (g *Game) Update() error {
 		g.start = XY{X: 0, Y: 0}
 	} else if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 		if g.createMode {
-			snappedPos := SnapPosition(wpos, g.vectors, snapDistance)
+			snappedPos := SnapPosition(wpos, walls, snapDistance)
 			if !g.secondClick && !g.firstClick {
 
 				// Start creating a new vector
@@ -65,7 +69,7 @@ func (g *Game) Update() error {
 				// Finish creating the vector
 				endX := snappedPos.X
 				endY := snappedPos.Y
-				g.vectors = append(g.vectors, Vector2D{
+				walls = append(walls, Vector2D{
 					X1: g.start.X,
 					Y1: g.start.Y,
 					X2: endX,
@@ -89,11 +93,35 @@ func (g *Game) Update() error {
 func (g *Game) writeVecs() {
 	buf := ""
 
-	for _, item := range g.vectors {
+	for _, item := range walls {
 		buf = buf + fmt.Sprintf("%v,%v,%v,%v\n", item.X1/scaleDiv, item.Y1/scaleDiv, item.X2/scaleDiv, item.Y2/scaleDiv)
 	}
 
-	os.WriteFile("vecs.txt", []byte(buf), 0755)
+	os.WriteFile(levelPath, []byte(buf), 0755)
+}
+
+func readVecs() {
+	data, err := os.ReadFile(levelPath)
+	if err != nil {
+		log.Fatalln("Unable to read " + levelPath)
+	}
+
+	walls = []Vector2D{}
+	text := string(data)
+	lines := strings.Split(text, "\n")
+
+	for _, line := range lines {
+		args := strings.Split(line, ",")
+		if len(args) != 4 {
+			continue
+		}
+		x1, _ := strconv.ParseFloat(args[0], 64)
+		y1, _ := strconv.ParseFloat(args[1], 64)
+		x2, _ := strconv.ParseFloat(args[2], 64)
+		y2, _ := strconv.ParseFloat(args[3], 64)
+
+		walls = append(walls, Vector2D{X1: x1 / scaleDiv, Y1: y1 / scaleDiv, X2: x2 / scaleDiv, Y2: y2 / scaleDiv})
+	}
 }
 
 // Draw is called every frame
@@ -106,7 +134,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	vectorScreen := ebiten.NewImageFromImage(vectorImg)
 
 	// Draw each vector with respect to the camera position
-	for _, vec := range g.vectors {
+	for _, vec := range walls {
 		x1 := vec.X1 + g.camera.X
 		y1 := vec.Y1 + g.camera.Y
 		x2 := vec.X2 + g.camera.X
@@ -117,7 +145,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if g.createMode {
 		mouseX, mouseY := ebiten.CursorPosition()
 		mpos := XY{X: float64(mouseX), Y: float64(mouseY)}
-		snappedPos := SnapPosition(mpos, g.vectors, snapDistance)
+		snappedPos := SnapPosition(mpos, walls, snapDistance)
 
 		if g.createMode {
 			vector.DrawFilledCircle(screen, float32(snappedPos.X), float32(snappedPos.Y), lineWidth*2, colornames.Yellow, true)
@@ -146,6 +174,8 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 func main() {
 	// Create a new game instance
 	game := &Game{}
+
+	readVecs()
 
 	// Start the Ebiten game loop
 	if err := ebiten.RunGame(game); err != nil {

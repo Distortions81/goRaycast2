@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -36,6 +37,13 @@ func main() {
 
 	readVecs()
 
+	go func() {
+		for {
+			time.Sleep(time.Second)
+			readVecs()
+		}
+	}()
+
 	if err := ebiten.RunGame(&Game{}); err != nil {
 		panic(err)
 	}
@@ -47,6 +55,7 @@ func readVecs() {
 		log.Fatalln("Unable to read " + levelPath)
 	}
 
+	walls = []Vec64{}
 	text := string(data)
 	lines := strings.Split(text, "\n")
 
