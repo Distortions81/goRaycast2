@@ -28,7 +28,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	for x := 0; x < screenWidth; x++ {
 		cameraX := 2*float64(x)/float64(screenWidth) - 1
-		rayDir := AngleToVelocity(player.angle+cameraX, 1)
+		rayDir := angleToXY(player.angle+cameraX, 1)
 
 		//Need to optimize, this is a slow way to do this
 		nearestDist := math.MaxFloat64

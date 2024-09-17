@@ -56,7 +56,7 @@ func (g *Game) Update() error {
 		player.angle += turnSpeed
 	}
 
-	player.velocity = AngleToVelocity(player.angle, player.speed)
+	player.velocity = angleToXY(player.angle, player.speed)
 
 	player.pos = addXY(player.pos, player.velocity)
 	return nil
@@ -76,7 +76,7 @@ func clipMovement(movement, collisionNormal XY64) XY64 {
 }
 
 // Function to convert an angle in radians to a velocity vector with momentum
-func AngleToVelocity(angle float64, magnitude float64) XY64 {
+func angleToXY(angle float64, magnitude float64) XY64 {
 	// Calculate X and Y components using trigonometry
 	vx := magnitude * math.Cos(angle)
 	vy := magnitude * math.Sin(angle)
