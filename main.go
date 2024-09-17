@@ -18,7 +18,7 @@ func main() {
 	//walls = append(walls, BoxToVectors(5, 5, 1, 1)...)
 
 	player = playerData{
-		pos: XY64{X: 3, Y: 3},
+		pos: XY64{X: 3, Y: 3}, angle: 4,
 	}
 
 	ebiten.SetVsyncEnabled(true)

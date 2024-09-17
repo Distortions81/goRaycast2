@@ -21,24 +21,34 @@ func (g *Game) Update() error {
 	if ebiten.IsKeyPressed(ebiten.KeyS) {
 		if player.speed < maxSpeed {
 			player.speed += moveSpeed
+			if player.speed > maxSpeed {
+				player.speed = maxSpeed
+			}
 		}
 	} else if ebiten.IsKeyPressed(ebiten.KeyW) {
 		if player.speed > -maxSpeed {
 			player.speed -= moveSpeed
+			if player.speed < -maxSpeed {
+				player.speed = -maxSpeed
+			}
 		}
 	} else {
 		if player.speed > 0 {
 			if player.speed < friction {
 				player.speed = 0
+			} else {
+				player.speed -= friction
 			}
-			player.speed -= friction
 		} else if player.speed < 0 {
 			if player.speed > -friction {
 				player.speed = 0
+			} else {
+				player.speed += friction
 			}
-			player.speed += friction
 		}
 	}
+
+	//do rotation speed too
 	if ebiten.IsKeyPressed(ebiten.KeyA) {
 		player.angle -= turnSpeed
 	}
