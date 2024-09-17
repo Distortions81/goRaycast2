@@ -38,9 +38,14 @@ func main() {
 	readVecs()
 
 	go func() {
+		var oldModTime time.Time
 		for {
-			time.Sleep(time.Second)
-			readVecs()
+			time.Sleep(time.Millisecond * 500)
+			stat, _ := os.Stat(levelPath)
+			if stat.ModTime() != oldModTime {
+				oldModTime = stat.ModTime()
+				readVecs()
+			}
 		}
 	}()
 
