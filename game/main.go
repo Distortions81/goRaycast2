@@ -24,9 +24,6 @@ func (g *Game) Layout(w, h int) (int, int) {
 }
 
 func main() {
-	//walls = BoxToVectors(1, 1, 10, 10)
-	//walls = append(walls, BoxToVectors(5, 5, 1, 1)...)
-
 	player = playerData{
 		pos: XY64{X: 3, Y: 3}, angle: 4,
 	}

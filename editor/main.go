@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"image"
 	"image/color"
 	"log"
 	"math"
@@ -21,6 +20,7 @@ const (
 	snapDistance = 10
 	lineWidth    = 2
 	scaleDiv     = 1
+	gridSpacing  = 10
 	levelPath    = "../editor/vecs.txt"
 )
 
@@ -44,6 +44,9 @@ type Game struct {
 	createMode,
 	firstClick,
 	secondClick bool
+
+	screenWidth,
+	screenHeight int
 }
 
 // Update is called every frame
@@ -124,14 +127,18 @@ func readVecs() {
 	}
 }
 
+const gVal = 16
+
+var gridColor = color.NRGBA{R: gVal, G: gVal, B: gVal, A: 255}
+
 // Draw is called every frame
 func (g *Game) Draw(screen *ebiten.Image) {
 	// Clear the screen with a white background
 	screen.Fill(color.Black)
 
+	drawGrid(g, screen)
+
 	// Create a new vector image to draw on
-	vectorImg := image.NewRGBA(image.Rect(0, 0, 1280, 1440))
-	vectorScreen := ebiten.NewImageFromImage(vectorImg)
 
 	// Draw each vector with respect to the camera position
 	for _, vec := range walls {
@@ -139,7 +146,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		y1 := vec.Y1 + g.camera.Y
 		x2 := vec.X2 + g.camera.X
 		y2 := vec.Y2 + g.camera.Y
-		vector.StrokeLine(vectorScreen, float32(x1), float32(y1), float32(x2), float32(y2), lineWidth, color.White, true)
+		vector.StrokeLine(screen, float32(x1), float32(y1), float32(x2), float32(y2), lineWidth, color.White, true)
 	}
 
 	if g.createMode {
@@ -155,9 +162,6 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 	}
 
-	// Draw the vector image onto the screen
-	screen.DrawImage(vectorScreen, nil)
-
 	// Draw text for clarity
 	if g.createMode {
 		ebitenutil.DebugPrint(screen, "Vector created, click again to specify vector end.")
@@ -166,8 +170,21 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 }
 
+func drawGrid(g *Game, screen *ebiten.Image) {
+	for x := float32(0); x < float32(g.screenWidth); x += gridSpacing {
+		nx := x + float32(int(g.camera.X)%int(gridSpacing))
+		vector.StrokeLine(screen, nx, 0, nx, float32(g.screenHeight), 1, gridColor, false)
+	}
+	for y := float32(0); y < float32(g.screenWidth); y += gridSpacing {
+		ny := y + float32(int(g.camera.Y)%int(gridSpacing))
+		vector.StrokeLine(screen, 0, ny, float32(g.screenWidth), ny, 1, gridColor, false)
+	}
+}
+
 // Layout sets the size of the window
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
+	g.screenWidth = outsideWidth
+	g.screenHeight = outsideHeight
 	return outsideWidth, outsideHeight
 }
 
@@ -177,6 +194,7 @@ func main() {
 
 	readVecs()
 
+	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 	// Start the Ebiten game loop
 	if err := ebiten.RunGame(game); err != nil {
 		panic(err)
