@@ -28,7 +28,7 @@ func snapPos(newPos XY, existingPositions []Vector2D, threshold float64) XY {
 		}
 	}
 
-	return SnapToGrid(newPos, 10, 3)
+	return SnapToGrid(newPos, gridSize, gridSnapDist)
 }
 
 func SnapToGrid(pos XY, gridSize, threshold float64) XY {

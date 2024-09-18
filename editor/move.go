@@ -20,7 +20,7 @@ func (g *Game) Update() error {
 		g.start = XY{X: 0, Y: 0}
 	} else if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 		if g.createMode {
-			snappedPos := snapPos(wpos, walls, snapDistance)
+			snappedPos := snapPos(wpos, walls, lineSnapDist)
 			if !g.secondClick && !g.firstClick {
 
 				// Start creating a new vector

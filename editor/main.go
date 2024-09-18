@@ -7,12 +7,15 @@ import (
 )
 
 const (
-	snapDistance = 10
-	lineWidth    = 2
-	scaleDiv     = 1
-	gridSpacing  = 10
-	levelPath    = "../level1.txt"
-	gridBright   = 16
+	levelPath = "../level1.txt"
+
+	lineSnapDist = 10
+	gridSnapDist = 5
+
+	scaleDiv   = 1
+	lineWidth  = 2
+	gridBright = 25
+	gridSize   = 25
 )
 
 var (

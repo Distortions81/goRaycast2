@@ -30,7 +30,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if g.createMode {
 		mouseX, mouseY := ebiten.CursorPosition()
 		mpos := XY{X: float64(mouseX), Y: float64(mouseY)}
-		snappedPos := snapPos(mpos, walls, snapDistance)
+		snappedPos := snapPos(mpos, walls, lineSnapDist)
 
 		if g.createMode {
 			vector.DrawFilledCircle(screen, float32(snappedPos.X), float32(snappedPos.Y), lineWidth*2, colornames.Yellow, true)
@@ -49,12 +49,12 @@ func (g *Game) Draw(screen *ebiten.Image) {
 }
 
 func drawGrid(g *Game, screen *ebiten.Image) {
-	for x := float32(0); x < float32(g.screenWidth); x += gridSpacing {
-		nx := x + float32(int(g.camera.X)%int(gridSpacing))
+	for x := float32(0); x < float32(g.screenWidth); x += gridSize {
+		nx := x + float32(int(g.camera.X)%int(gridSize))
 		vector.StrokeLine(screen, nx, 0, nx, float32(g.screenHeight), 1, gridColor, false)
 	}
-	for y := float32(0); y < float32(g.screenWidth); y += gridSpacing {
-		ny := y + float32(int(g.camera.Y)%int(gridSpacing))
+	for y := float32(0); y < float32(g.screenWidth); y += gridSize {
+		ny := y + float32(int(g.camera.Y)%int(gridSize))
 		vector.StrokeLine(screen, 0, ny, float32(g.screenWidth), ny, 1, gridColor, false)
 	}
 }
