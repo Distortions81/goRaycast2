@@ -35,6 +35,14 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	frameNumber++
 
+	// Precompute texture width and height
+	textureBounds := wallImg.Bounds()
+	textureWidth := textureBounds.Dx()
+	textureHeight := textureBounds.Dy()
+
+	// Precompute constants for screen dimensions
+	screenCenter := screenHeight / 2
+
 	for x := 0; x < screenWidth; x++ {
 		// 1. Map screen X to camera plane (-1 to 1)
 		cameraX := 2*float64(x)/float64(screenWidth) - 1
@@ -44,55 +52,64 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 		// Variables to track nearest wall and hit position
 		nearestDist := math.MaxFloat64
-		var wall Vec64
+		var nearwall Vec64
 		var hitPos XY64 // Intersection point on the wall
 
-		for _, wall = range walls {
+		// Loop through all the walls in the scene to find the nearest wall hit by the ray
+		for _, wall := range walls {
 			if dist, hPos, hit := rayIntersectsSegment(player.pos, rayDir, wall); hit {
+				// Correct the distance to avoid fish-eye effect
 				correctedDist := dist * math.Cos(math.Atan(cameraX))
 				if correctedDist < nearestDist {
 					nearestDist = correctedDist
 					hitPos = hPos
+					nearwall = wall
 				}
 			}
 		}
 
 		if nearestDist < math.MaxFloat64 {
 			// 3. Shading Calculation (done per column, not per pixel)
-			wallColor := wallColor
 			valFloat := applyFalloff(nearestDist, lightIntensity, float64(wallColor.R+wallColor.G+wallColor.B)/765.0/3.0)
 			wallColor.A = uint8(valFloat * 255)
 
 			// Calculate line height and start/end of the slice
 			lineHeight := int(float64(screenHeight) / nearestDist)
-			drawStart := -lineHeight/2 + screenHeight/2
+			drawStart := -lineHeight/2 + screenCenter
 			if drawStart < 0 {
 				drawStart = 0
 			}
-			drawEnd := lineHeight/2 + screenHeight/2
+			drawEnd := lineHeight/2 + screenCenter
 			if drawEnd >= screenHeight {
 				drawEnd = screenHeight - 1
 			}
 
 			// 4. Calculate the correct X position on the texture based on hitPos
-			wallLength := math.Sqrt(math.Pow(wall.X2-wall.X1, 2) + math.Pow(wall.Y2-wall.Y1, 2))
-			hitDistance := math.Sqrt(math.Pow(hitPos.X-wall.X1, 2) + math.Pow(hitPos.Y-wall.Y1, 2))
-			wallHitPosition := hitDistance / wallLength
 
-			textureWidth := wallImg.Bounds().Dx()
-			textureX := int(wallHitPosition*float64(textureWidth)) % textureWidth
+			// Wall's direction vector (the vector from wall start to wall end)
+			wallDirX := nearwall.X2 - nearwall.X1
+			wallDirY := nearwall.Y2 - nearwall.Y1
+			wallLength := math.Sqrt(wallDirX*wallDirX + wallDirY*wallDirY)
+
+			// Normalize the direction vector
+			wallDirX /= wallLength
+			wallDirY /= wallLength
+			dx := hitPos.X - nearwall.X1
+			dy := hitPos.Y - nearwall.Y1
+			wallHitPosition := (dx*wallDirX + dy*wallDirY)
+
+			// Convert wallHitPosition into texture space
+			textureX := int((wallHitPosition * float64(textureWidth))) % textureWidth
 			if textureX < 0 {
 				textureX += textureWidth
 			}
 
 			// 5. Texture clipping and scaling
-			textureHeight := wallImg.Bounds().Dy()
 			textureStep := float64(textureHeight) / float64(lineHeight) // Step size for texture Y
 			textureY := 0.0
 
 			// If the wall height is larger than the screen, adjust textureY and clip the texture
 			if lineHeight > screenHeight {
-				// Adjust the starting texture Y to account for clipping at the top of the screen
 				textureY = float64(lineHeight-screenHeight) / 2 * textureStep
 				drawStart = 0 // Clamp drawStart to 0 (top of screen)
 			}
