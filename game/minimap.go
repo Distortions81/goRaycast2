@@ -10,7 +10,7 @@ import (
 
 const (
 	miniMapSize   = 100
-	miniMapRadius = 10
+	miniMapRadius = 30
 )
 
 // Render a clipped wall on the minimap, ensuring it stays within the minimap radius
