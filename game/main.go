@@ -34,7 +34,7 @@ func main() {
 		pos: XY64{X: 3, Y: 3}, angle: 4,
 	}
 
-	ebiten.SetVsyncEnabled(true)
+	ebiten.SetVsyncEnabled(false)
 	ebiten.SetWindowSize(screenWidth, screenHeight)
 	ebiten.SetWindowTitle("Raycaster with Vectors")
 

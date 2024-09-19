@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"image/color"
-	"math"
 	"sync"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -30,5 +29,5 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	renderScene(bspData, player.pos, player.angle, screen)
 	renderMinimap(screen)
 
-	ebitenutil.DebugPrint(screen, fmt.Sprintf("FPS: %v, vel: %3.2f,%3.2f, angle: %3.2f, speed: %3.2f", int(ebiten.ActualFPS()), player.velocity.X, player.velocity.Y, player.angle, math.Sqrt(float64(player.velocity.X*player.velocity.X+player.velocity.Y*player.velocity.Y))))
+	ebitenutil.DebugPrint(screen, fmt.Sprintf("FPS: %v", int(ebiten.ActualFPS())))
 }
