@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func (g *Game) writeVecs() {
+func (g *Game) writeLevel() {
 	buf := ""
 
 	for _, item := range walls {
@@ -17,7 +17,7 @@ func (g *Game) writeVecs() {
 	os.WriteFile(levelPath, []byte(buf), 0755)
 }
 
-func readVecs() {
+func readLevel() {
 	data, err := os.ReadFile(levelPath)
 	if err != nil {
 		fmt.Printf("Unable to read %v\n", levelPath)

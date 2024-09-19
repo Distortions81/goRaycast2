@@ -37,7 +37,7 @@ func (g *Game) Update() error {
 					Y2: endY,
 				})
 				fmt.Printf("created: %v,%v - %v,%v\n", g.start.X, g.start.Y, endX, endY)
-				g.writeVecs()
+				g.writeLevel()
 				g.secondClick = true
 				g.createMode = false
 			}

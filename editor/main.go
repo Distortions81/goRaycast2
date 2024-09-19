@@ -27,7 +27,7 @@ func main() {
 	// Create a new game instance
 	game := &Game{}
 
-	readVecs()
+	readLevel()
 
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 	// Start the Ebiten game loop

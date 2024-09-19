@@ -28,10 +28,10 @@ func snapPos(newPos pos32, existingPositions []line32, threshold float32) pos32 
 		}
 	}
 
-	return SnapToGrid(newPos, gridSize, gridSnapDist)
+	return snapToGrid(newPos, gridSize, gridSnapDist)
 }
 
-func SnapToGrid(pos pos32, gridSize, threshold float32) pos32 {
+func snapToGrid(pos pos32, gridSize, threshold float32) pos32 {
 	snapX := math32.Round(pos.X/gridSize) * gridSize
 	snapY := math32.Round(pos.Y/gridSize) * gridSize
 
