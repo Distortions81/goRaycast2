@@ -23,7 +23,7 @@ func readVecs() {
 		fmt.Printf("Unable to read %v\n", levelPath)
 	}
 
-	walls = []Vector2D{}
+	walls = []line32{}
 	text := string(data)
 	lines := strings.Split(text, "\n")
 
@@ -37,6 +37,6 @@ func readVecs() {
 		x2, _ := strconv.ParseFloat(args[2], 64)
 		y2, _ := strconv.ParseFloat(args[3], 64)
 
-		walls = append(walls, Vector2D{X1: x1 / scaleDiv, Y1: y1 / scaleDiv, X2: x2 / scaleDiv, Y2: y2 / scaleDiv})
+		walls = append(walls, line32{X1: float32(x1) / scaleDiv, Y1: float32(y1) / scaleDiv, X2: float32(x2) / scaleDiv, Y2: float32(y2) / scaleDiv})
 	}
 }

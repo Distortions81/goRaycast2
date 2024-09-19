@@ -1,27 +1,19 @@
 package main
 
-type Vec64 struct {
-	X1, Y1, X2, Y2 float64
+type Line32 struct {
+	X1, Y1, X2, Y2 float32
 }
 
-type Vec32 struct {
-	X1, Y1, X2, Y2 float64
-}
-
-type XY64 struct {
-	X, Y float64
-}
-
-type XY32 struct {
-	X, Y float64
+type pos32 struct {
+	X, Y float32
 }
 
 type playerData struct {
-	pos      XY64
-	velocity XY64
-	size     float64
-	angle    float64
-	speed    float64
+	pos      pos32
+	velocity pos32
+	size     float32
+	angle    float32
+	speed    float32
 }
 
 type Game struct {

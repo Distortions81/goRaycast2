@@ -20,7 +20,7 @@ const (
 )
 
 var (
-	walls   = []Vec64{}
+	walls   = []Line32{}
 	wallImg *ebiten.Image
 	bspData *BSPNode
 )
@@ -31,7 +31,7 @@ func (g *Game) Layout(w, h int) (int, int) {
 
 func main() {
 	player = playerData{
-		pos: XY64{X: 3, Y: 3}, angle: 4,
+		pos: pos32{X: 3, Y: 3}, angle: 4,
 	}
 
 	ebiten.SetVsyncEnabled(false)
@@ -72,7 +72,7 @@ func readVecs() {
 		log.Fatalln("Unable to read " + levelPath)
 	}
 
-	tmp := []Vec64{}
+	tmp := []Line32{}
 	text := string(data)
 	lines := strings.Split(text, "\n")
 
@@ -81,12 +81,12 @@ func readVecs() {
 		if len(args) != 4 {
 			continue
 		}
-		x1, _ := strconv.ParseFloat(args[0], 64)
-		y1, _ := strconv.ParseFloat(args[1], 64)
-		x2, _ := strconv.ParseFloat(args[2], 64)
-		y2, _ := strconv.ParseFloat(args[3], 64)
+		x1, _ := strconv.ParseFloat(args[0], 32)
+		y1, _ := strconv.ParseFloat(args[1], 32)
+		x2, _ := strconv.ParseFloat(args[2], 32)
+		y2, _ := strconv.ParseFloat(args[3], 32)
 
-		tmp = append(tmp, Vec64{X1: x1 / mapScaleDiv, Y1: y1 / mapScaleDiv, X2: x2 / mapScaleDiv, Y2: y2 / mapScaleDiv})
+		tmp = append(tmp, Line32{X1: float32(x1) / mapScaleDiv, Y1: float32(y1) / mapScaleDiv, X2: float32(x2) / mapScaleDiv, Y2: float32(y2) / mapScaleDiv})
 	}
 
 	renderLock.Lock()

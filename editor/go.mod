@@ -3,6 +3,7 @@ module editor
 go 1.23.0
 
 require (
+	github.com/chewxy/math32 v1.11.1
 	github.com/hajimehoshi/ebiten/v2 v2.7.10
 	golang.org/x/image v0.18.0
 )

@@ -1,8 +1,7 @@
 package main
 
 import (
-	"math"
-
+	"github.com/chewxy/math32"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 	"golang.org/x/image/colornames"
@@ -14,21 +13,21 @@ const (
 )
 
 // Render a clipped wall on the minimap, ensuring it stays within the minimap radius
-func renderClippedWallOnMinimap(wall Vec64, playerX, playerY float32, screen *ebiten.Image) {
+func renderClippedWallOnMinimap(wall Line32, playerX, playerY int, screen *ebiten.Image) {
 	// Translate wall coordinates relative to player position
-	dx1 := float32(wall.X1) - float32(player.pos.X)
-	dy1 := float32(wall.Y1) - float32(player.pos.Y)
-	dx2 := float32(wall.X2) - float32(player.pos.X)
-	dy2 := float32(wall.Y2) - float32(player.pos.Y)
+	dx1 := (wall.X1) - (player.pos.X)
+	dy1 := (wall.Y1) - (player.pos.Y)
+	dx2 := (wall.X2) - (player.pos.X)
+	dy2 := (wall.Y2) - (player.pos.Y)
 
 	// Scale wall coordinates to minimap size based on miniMapRadius
-	x1 := playerX + dx1*(miniMapSize/miniMapRadius)
-	y1 := playerY + dy1*(miniMapSize/miniMapRadius)
-	x2 := playerX + dx2*(miniMapSize/miniMapRadius)
-	y2 := playerY + dy2*(miniMapSize/miniMapRadius)
+	x1 := float32(playerX) + dx1*(miniMapSize/miniMapRadius)
+	y1 := float32(playerY) + dy1*(miniMapSize/miniMapRadius)
+	x2 := float32(playerX) + dx2*(miniMapSize/miniMapRadius)
+	y2 := float32(playerY) + dy2*(miniMapSize/miniMapRadius)
 
 	// Clip the wall to ensure it's within the minimap radius
-	if !clipLineToCircle(&x1, &y1, &x2, &y2, playerX, playerY, miniMapRadius*(miniMapSize/miniMapRadius)) {
+	if !clipLineToCircle(&x1, &y1, &x2, &y2, float32(playerX), float32(playerY), miniMapRadius*(miniMapSize/miniMapRadius)) {
 		return // Skip if the wall is entirely outside the minimap radius
 	}
 
@@ -37,14 +36,14 @@ func renderClippedWallOnMinimap(wall Vec64, playerX, playerY float32, screen *eb
 }
 
 // Traverse BSP and render walls within minimap radius
-func traverseBSPForMinimap(node *BSPNode, playerX, playerY float32, screen *ebiten.Image) {
+func traverseBSPForMinimap(node *BSPNode, playerX, playerY int, screen *ebiten.Image) {
 	if node == nil {
 		return
 	}
 
 	// Calculate the distance to both wall endpoints using the player's position
-	distToWall1 := calculateDistance(float32(node.wall.X1), float32(node.wall.Y1), float32(player.pos.X), float32(player.pos.Y))
-	distToWall2 := calculateDistance(float32(node.wall.X2), float32(node.wall.Y2), float32(player.pos.X), float32(player.pos.Y))
+	distToWall1 := calculateDistance((node.wall.X1), (node.wall.Y1), (player.pos.X), (player.pos.Y))
+	distToWall2 := calculateDistance((node.wall.X2), (node.wall.Y2), (player.pos.X), (player.pos.Y))
 
 	// Check if either endpoint is within the minimap radius, or if the wall intersects the radius
 	if distToWall1 <= miniMapRadius || distToWall2 <= miniMapRadius || wallIntersectsMinimap(node.wall) {
@@ -60,8 +59,8 @@ func traverseBSPForMinimap(node *BSPNode, playerX, playerY float32, screen *ebit
 // Render the minimap, ensuring it fits fully on the screen
 func renderMinimap(screen *ebiten.Image) {
 	// Calculate the center of the minimap, based on screenWidth and miniMapSize
-	miniMapCenterX := float32(miniMapSize + 10)
-	miniMapCenterY := float32(miniMapSize + 10)
+	miniMapCenterX := (miniMapSize + 10)
+	miniMapCenterY := (miniMapSize + 10)
 
 	// Calculate the top-left corner of the minimap
 	miniMapTopLeftX := miniMapCenterX - miniMapSize/2
@@ -75,24 +74,24 @@ func renderMinimap(screen *ebiten.Image) {
 	traverseBSPForMinimap(bspData, playerX, playerY, screen)
 
 	// Draw the player as a circle in the center of the minimap
-	vector.DrawFilledCircle(screen, playerX, playerY, 5, colornames.Yellow, false)
+	vector.DrawFilledCircle(screen, float32(playerX), float32(playerY), 5, colornames.Yellow, false)
 
 	// Optionally, draw the player's facing direction on the minimap
-	facingX := playerX - float32(math.Cos(player.angle))*10
-	facingY := playerY - float32(math.Sin(player.angle))*10
-	vector.StrokeLine(screen, playerX, playerY, facingX, facingY, 2, colornames.Red, false)
+	facingX := float32(playerX) - (math32.Cos(player.angle))*10
+	facingY := float32(playerY) - (math32.Sin(player.angle))*10
+	vector.StrokeLine(screen, float32(playerX), float32(playerY), facingX, facingY, 2, colornames.Red, false)
 }
 
 // Calculate the 2D Euclidean distance between two points
 func calculateDistance(x1, y1, x2, y2 float32) float32 {
-	return float32(math.Sqrt(float64((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1))))
+	return (math32.Sqrt(((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1))))
 }
 
 // Check if a wall intersects the minimap radius
-func wallIntersectsMinimap(wall Vec64) bool {
+func wallIntersectsMinimap(wall Line32) bool {
 	// Calculate distances from both endpoints to the player position (minimap center)
-	dist1 := calculateDistance(float32(wall.X1), float32(wall.Y1), float32(player.pos.X), float32(player.pos.Y))
-	dist2 := calculateDistance(float32(wall.X2), float32(wall.Y2), float32(player.pos.X), float32(player.pos.Y))
+	dist1 := calculateDistance((wall.X1), (wall.Y1), (player.pos.X), (player.pos.Y))
+	dist2 := calculateDistance((wall.X2), (wall.Y2), (player.pos.X), (player.pos.Y))
 
 	// Check if one endpoint is inside the minimap radius and the other is outside
 	return (dist1 <= miniMapRadius && dist2 > miniMapRadius) || (dist2 <= miniMapRadius && dist1 > miniMapRadius)
@@ -103,12 +102,12 @@ func clipLineToCircle(x1, y1, x2, y2 *float32, cx, cy, r float32) bool {
 	// Vector from the center of the circle to the first point
 	dx1 := *x1 - cx
 	dy1 := *y1 - cy
-	dist1 := float32(math.Sqrt(float64(dx1*dx1 + dy1*dy1)))
+	dist1 := (math32.Sqrt((dx1*dx1 + dy1*dy1)))
 
 	// Vector from the center of the circle to the second point
 	dx2 := *x2 - cx
 	dy2 := *y2 - cy
-	dist2 := float32(math.Sqrt(float64(dx2*dx2 + dy2*dy2)))
+	dist2 := (math32.Sqrt((dx2*dx2 + dy2*dy2)))
 
 	// If both points are inside the circle, no need to clip
 	if dist1 <= r && dist2 <= r {
@@ -123,7 +122,7 @@ func clipLineToCircle(x1, y1, x2, y2 *float32, cx, cy, r float32) bool {
 	// Normalize the direction vector from point 1 to point 2
 	dx := *x2 - *x1
 	dy := *y2 - *y1
-	len := float32(math.Sqrt(float64(dx*dx + dy*dy)))
+	len := (math32.Sqrt((dx*dx + dy*dy)))
 	dx /= len
 	dy /= len
 
@@ -159,6 +158,6 @@ func intersectWithCircle(x, y, dx, dy, cx, cy, r float32) (float32, float32) {
 	}
 
 	// Calculate the intersection point
-	t := (-b - float32(math.Sqrt(float64(discriminant)))) / (2 * a)
+	t := (-b - (math32.Sqrt((discriminant)))) / (2 * a)
 	return x + t*dx + cx, y + t*dy + cy
 }

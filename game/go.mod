@@ -3,6 +3,7 @@ module test
 go 1.23.1
 
 require (
+	github.com/chewxy/math32 v1.11.1
 	github.com/hajimehoshi/ebiten/v2 v2.7.9
 	golang.org/x/image v0.20.0
 )

@@ -1,8 +1,7 @@
 package main
 
 import (
-	"math"
-
+	"github.com/chewxy/math32"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
@@ -62,7 +61,7 @@ func (g *Game) Update() error {
 	return nil
 }
 
-func clipMovement(movement, collisionNormal XY64) XY64 {
+func clipMovement(movement, collisionNormal pos32) pos32 {
 	// Normalize the collision normal
 	normal := normalizeXY(collisionNormal)
 
@@ -76,9 +75,9 @@ func clipMovement(movement, collisionNormal XY64) XY64 {
 }
 
 // Function to convert an angle in radians to a velocity vector with momentum
-func angleToXY(angle float64, magnitude float64) XY64 {
+func angleToXY(angle float32, magnitude float32) pos32 {
 	// Calculate X and Y components using trigonometry
-	vx := magnitude * math.Cos(angle)
-	vy := magnitude * math.Sin(angle)
-	return XY64{X: vx, Y: vy}
+	vx := magnitude * math32.Cos(angle)
+	vy := magnitude * math32.Sin(angle)
+	return pos32{X: vx, Y: vy}
 }

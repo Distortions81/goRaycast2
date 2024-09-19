@@ -19,7 +19,7 @@ const (
 )
 
 var (
-	walls     = []Vector2D{}
+	walls     = []line32{}
 	gridColor = color.NRGBA{R: gridBright, G: gridBright, B: gridBright, A: 255}
 )
 
