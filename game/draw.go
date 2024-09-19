@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"image"
 	"image/color"
 	"math"
 	"sync"
@@ -35,7 +34,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	frameNumber++
 
-	renderBSPTree(bspData, player.pos, screen)
+	renderScene(bspData, player.pos, player.angle, screen)
 
 	//Minimap
 	for _, v := range walls {
@@ -50,97 +49,4 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	vector.DrawFilledCircle(screen, miniMapOffset+float32(player.pos.X)*miniMapSize, miniMapOffset+float32(player.pos.Y)*miniMapSize, 5, colornames.Yellow, false)
 
 	ebitenutil.DebugPrint(screen, fmt.Sprintf("FPS: %v, vel: %3.2f,%3.2f, angle: %3.2f, speed: %3.2f", int(ebiten.ActualFPS()), player.velocity.X, player.velocity.Y, player.angle, math.Sqrt(float64(player.velocity.X*player.velocity.X+player.velocity.Y*player.velocity.Y))))
-}
-
-func renderWall(wall Vec64, screen *ebiten.Image) {
-	// Precompute texture width and height
-	textureBounds := wallImg.Bounds()
-	textureWidth := textureBounds.Dx()
-	textureHeight := textureBounds.Dy()
-
-	// Precompute constants for screen dimensions
-	screenCenter := screenHeight / 2
-
-	for x := 0; x < screenWidth; x++ {
-		// 1. Map screen X to camera plane (-1 to 1)
-		cameraX := 2*float64(x)/float64(screenWidth) - 1
-
-		// 2. Adjust ray direction based on player's current angle + offset from center
-		rayDir := angleToXY(player.angle+math.Atan(cameraX), 1)
-
-		// Variables to track nearest wall and hit position
-		nearestDist := math.MaxFloat64
-		var nearwall Vec64
-		var hitPos XY64 // Intersection point on the wall
-
-		if dist, hPos, hit := rayIntersectsSegment(player.pos, rayDir, wall); hit {
-			// Correct the distance to avoid fish-eye effect
-			correctedDist := dist * math.Cos(math.Atan(cameraX))
-			if correctedDist < nearestDist {
-				nearestDist = correctedDist
-				hitPos = hPos
-				nearwall = wall
-			}
-		}
-
-		if nearestDist < math.MaxFloat64 {
-			// 3. Shading Calculation (done per column, not per pixel)
-			valFloat := applyFalloff(nearestDist, lightIntensity, float64(wallColor.R+wallColor.G+wallColor.B)/765.0/3.0)
-			wallColor.A = 255
-
-			// Calculate line height and start/end of the slice
-			lineHeight := int(float64(screenHeight) / nearestDist)
-			drawStart := -lineHeight/2 + screenCenter
-			if drawStart < 0 {
-				drawStart = 0
-			}
-			drawEnd := lineHeight/2 + screenCenter
-			if drawEnd >= screenHeight {
-				drawEnd = screenHeight - 1
-			}
-
-			// 4. Calculate the correct X position on the texture based on hitPos
-
-			// Wall's direction vector (the vector from wall start to wall end)
-			wallDirX := nearwall.X2 - nearwall.X1
-			wallDirY := nearwall.Y2 - nearwall.Y1
-			wallLength := math.Sqrt(wallDirX*wallDirX + wallDirY*wallDirY)
-
-			// Normalize the direction vector
-			wallDirX /= wallLength
-			wallDirY /= wallLength
-			dx := hitPos.X - nearwall.X1
-			dy := hitPos.Y - nearwall.Y1
-			wallHitPosition := (dx*wallDirX + dy*wallDirY)
-
-			// Convert wallHitPosition into texture space
-			textureX := int((wallHitPosition * float64(textureWidth))) % textureWidth
-			if textureX < 0 {
-				textureX += textureWidth
-			}
-
-			// 5. Texture clipping and scaling
-			textureStep := float64(textureHeight) / float64(lineHeight) // Step size for texture Y
-			textureY := 0.0
-
-			// If the wall height is larger than the screen, adjust textureY and clip the texture
-			if lineHeight > screenHeight {
-				textureY = float64(lineHeight-screenHeight) / 2 * textureStep
-				drawStart = 0 // Clamp drawStart to 0 (top of screen)
-			}
-
-			// 6. Create a sub-image of the texture slice to draw (from textureX to textureX + 1)
-			srcRect := image.Rect(textureX, int(textureY), textureX+1, textureHeight)
-			textureSlice := wallImg.SubImage(srcRect).(*ebiten.Image)
-
-			// 7. Apply shading and draw the texture slice
-			op := &ebiten.DrawImageOptions{Filter: ebiten.FilterNearest}
-			op.GeoM.Scale(1, float64(lineHeight)/float64(textureHeight)) // Scale texture to line height
-			op.GeoM.Translate(float64(x), float64(drawStart))            // Position the texture slice
-			op.ColorScale.Scale(valFloat, valFloat, valFloat, 1)
-
-			// Draw the texture slice
-			screen.DrawImage(textureSlice, op)
-		}
-	}
 }
