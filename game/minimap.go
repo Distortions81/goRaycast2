@@ -60,8 +60,8 @@ func traverseBSPForMinimap(node *BSPNode, playerX, playerY float32, screen *ebit
 // Render the minimap, ensuring it fits fully on the screen
 func renderMinimap(screen *ebiten.Image) {
 	// Calculate the center of the minimap, based on screenWidth and miniMapSize
-	miniMapCenterX := float32(screenWidth) - miniMapSize - 10
-	miniMapCenterY := float32(screenHeight) - miniMapSize - 10
+	miniMapCenterX := float32(miniMapSize + 10)
+	miniMapCenterY := float32(miniMapSize + 10)
 
 	// Calculate the top-left corner of the minimap
 	miniMapTopLeftX := miniMapCenterX - miniMapSize/2
@@ -78,8 +78,8 @@ func renderMinimap(screen *ebiten.Image) {
 	vector.DrawFilledCircle(screen, playerX, playerY, 5, colornames.Yellow, false)
 
 	// Optionally, draw the player's facing direction on the minimap
-	facingX := playerX + float32(math.Cos(player.angle))*10
-	facingY := playerY + float32(math.Sin(player.angle))*10
+	facingX := playerX - float32(math.Cos(player.angle))*10
+	facingY := playerY - float32(math.Sin(player.angle))*10
 	vector.StrokeLine(screen, playerX, playerY, facingX, facingY, 2, colornames.Red, false)
 }
 
