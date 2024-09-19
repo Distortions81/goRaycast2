@@ -22,6 +22,7 @@ const (
 var (
 	walls   = []Vec64{}
 	wallImg *ebiten.Image
+	bspData *BSPNode
 )
 
 func (g *Game) Layout(w, h int) (int, int) {
@@ -38,6 +39,8 @@ func main() {
 	ebiten.SetWindowTitle("Raycaster with Vectors")
 
 	readVecs()
+
+	bspData = buildBSPTree(walls)
 
 	go func() {
 		var oldModTime time.Time

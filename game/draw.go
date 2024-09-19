@@ -35,6 +35,24 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	frameNumber++
 
+	renderBSPTree(bspData, player.pos, screen)
+
+	//Minimap
+	for _, v := range walls {
+		// Convert vector coordinates to screen coordinates
+		x1, y1 := float32(v.X1), float32(v.Y1)
+		x2, y2 := float32(v.X2), float32(v.Y2)
+
+		x1, y1, x2, y2 = miniMapOffset+x1*miniMapSize, miniMapOffset+y1*miniMapSize, miniMapOffset+x2*miniMapSize, miniMapOffset+y2*miniMapSize
+
+		vector.StrokeLine(screen, x1, y1, x2, y2, 1, colornames.Teal, false)
+	}
+	vector.DrawFilledCircle(screen, miniMapOffset+float32(player.pos.X)*miniMapSize, miniMapOffset+float32(player.pos.Y)*miniMapSize, 5, colornames.Yellow, false)
+
+	ebitenutil.DebugPrint(screen, fmt.Sprintf("FPS: %v, vel: %3.2f,%3.2f, angle: %3.2f, speed: %3.2f", int(ebiten.ActualFPS()), player.velocity.X, player.velocity.Y, player.angle, math.Sqrt(float64(player.velocity.X*player.velocity.X+player.velocity.Y*player.velocity.Y))))
+}
+
+func renderWall(wall Vec64, screen *ebiten.Image) {
 	// Precompute texture width and height
 	textureBounds := wallImg.Bounds()
 	textureWidth := textureBounds.Dx()
@@ -55,23 +73,20 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		var nearwall Vec64
 		var hitPos XY64 // Intersection point on the wall
 
-		// Loop through all the walls in the scene to find the nearest wall hit by the ray
-		for _, wall := range walls {
-			if dist, hPos, hit := rayIntersectsSegment(player.pos, rayDir, wall); hit {
-				// Correct the distance to avoid fish-eye effect
-				correctedDist := dist * math.Cos(math.Atan(cameraX))
-				if correctedDist < nearestDist {
-					nearestDist = correctedDist
-					hitPos = hPos
-					nearwall = wall
-				}
+		if dist, hPos, hit := rayIntersectsSegment(player.pos, rayDir, wall); hit {
+			// Correct the distance to avoid fish-eye effect
+			correctedDist := dist * math.Cos(math.Atan(cameraX))
+			if correctedDist < nearestDist {
+				nearestDist = correctedDist
+				hitPos = hPos
+				nearwall = wall
 			}
 		}
 
 		if nearestDist < math.MaxFloat64 {
 			// 3. Shading Calculation (done per column, not per pixel)
 			valFloat := applyFalloff(nearestDist, lightIntensity, float64(wallColor.R+wallColor.G+wallColor.B)/765.0/3.0)
-			wallColor.A = uint8(valFloat * 255)
+			wallColor.A = 255
 
 			// Calculate line height and start/end of the slice
 			lineHeight := int(float64(screenHeight) / nearestDist)
@@ -122,29 +137,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			op := &ebiten.DrawImageOptions{Filter: ebiten.FilterNearest}
 			op.GeoM.Scale(1, float64(lineHeight)/float64(textureHeight)) // Scale texture to line height
 			op.GeoM.Translate(float64(x), float64(drawStart))            // Position the texture slice
-			op.ColorM.Scale(float64(wallColor.R)/255, float64(wallColor.G)/255, float64(wallColor.B)/255, float64(wallColor.A)/255)
+			op.ColorScale.Scale(valFloat, valFloat, valFloat, 1)
 
 			// Draw the texture slice
 			screen.DrawImage(textureSlice, op)
 		}
 	}
-
-	//Minimap
-	for _, v := range walls {
-		// Convert vector coordinates to screen coordinates
-		x1, y1 := float32(v.X1), float32(v.Y1)
-		x2, y2 := float32(v.X2), float32(v.Y2)
-
-		x1, y1, x2, y2 = miniMapOffset+x1*miniMapSize, miniMapOffset+y1*miniMapSize, miniMapOffset+x2*miniMapSize, miniMapOffset+y2*miniMapSize
-
-		vector.StrokeLine(screen, x1, y1, x2, y2, 1, colornames.Teal, false)
-	}
-	vector.DrawFilledCircle(screen, miniMapOffset+float32(player.pos.X)*miniMapSize, miniMapOffset+float32(player.pos.Y)*miniMapSize, 5, colornames.Yellow, false)
-
-	ebitenutil.DebugPrint(screen, fmt.Sprintf("FPS: %v, vel: %3.2f,%3.2f, angle: %3.2f, speed: %3.2f", int(ebiten.ActualFPS()), player.velocity.X, player.velocity.Y, player.angle, math.Sqrt(float64(player.velocity.X*player.velocity.X+player.velocity.Y*player.velocity.Y))))
-}
-
-func RelativeCrop(source *ebiten.Image, r image.Rectangle) *ebiten.Image {
-	rx, ry := source.Bounds().Min.X+r.Min.X, source.Bounds().Min.Y+r.Min.Y
-	return source.SubImage(image.Rect(rx, ry, rx+r.Max.X, ry+r.Max.Y)).(*ebiten.Image)
 }

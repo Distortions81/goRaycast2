@@ -31,8 +31,7 @@ func lightFalloff(distance float64, intensity float64) float64 {
 }
 
 // Calculate color with falloff and gamma correction
-func applyFalloff(distance float64, intensity float64, value float64) float64 {
-	var correctedValue float64
+func applyFalloff(distance float64, intensity float64, value float64) float32 {
 
 	// Linearize each color channel
 	linear := sRGBToLinear(value)
@@ -43,10 +42,7 @@ func applyFalloff(distance float64, intensity float64, value float64) float64 {
 	// Multiply each linear channel by falloff
 	linear *= falloff
 
-	// Reapply gamma correction and clamp values to [0, 1]
-	correctedValue = math.Max(0, math.Min(1, linearTosRGB(linear)))
-
-	return correctedValue
+	return float32(math.Max(0, math.Min(1, linearTosRGB(linear))))
 }
 
 // HSVtoRGB converts HSV values to RGB
