@@ -11,9 +11,6 @@ import (
 )
 
 const (
-	miniMapSize   = 400
-	miniMapRadius = 50
-
 	lightIntensity = 1000
 )
 
