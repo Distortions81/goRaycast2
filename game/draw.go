@@ -23,7 +23,7 @@ const (
 )
 
 var (
-	wallColor   color.NRGBA = HSVtoRGB(180, 0.9, 0.8)
+	wallColor   color.NRGBA = HSVtoRGB(180, 0.0, 0.8)
 	frameNumber int
 )
 
