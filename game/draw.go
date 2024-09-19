@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"image"
 	"image/color"
 	"math"
 	"sync"
@@ -22,7 +23,7 @@ const (
 )
 
 var (
-	wallColor   color.NRGBA = HSVtoRGB(180, 0.9, 0.25)
+	wallColor   color.NRGBA = HSVtoRGB(180, 0.9, 0.8)
 	frameNumber int
 )
 
@@ -35,36 +36,34 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	frameNumber++
 
 	for x := 0; x < screenWidth; x++ {
-		// Map screen X to camera plane (-1 to 1)
+		// 1. Map screen X to camera plane (-1 to 1)
 		cameraX := 2*float64(x)/float64(screenWidth) - 1
 
-		// Adjust the ray direction based on player's current angle + offset from center view
+		// 2. Adjust ray direction based on player's current angle + offset from center
 		rayDir := angleToXY(player.angle+math.Atan(cameraX), 1)
 
-		// Calculate distance to the nearest wall
+		// Variables to track nearest wall and hit position
 		nearestDist := math.MaxFloat64
 		var wall Vec64
+		var hitPos XY64 // Intersection point on the wall
+
 		for _, wall = range walls {
-			if dist, hit := rayIntersectsSegment(player.pos, rayDir, wall); hit {
-				// Correct the fisheye effect by adjusting with cos of angle offset
+			if dist, hPos, hit := rayIntersectsSegment(player.pos, rayDir, wall); hit {
 				correctedDist := dist * math.Cos(math.Atan(cameraX))
 				if correctedDist < nearestDist {
 					nearestDist = correctedDist
+					hitPos = hPos
 				}
 			}
 		}
 
 		if nearestDist < math.MaxFloat64 {
-			// Light falloff and gamma correction (unchanged)
+			// 3. Shading Calculation (done per column, not per pixel)
 			wallColor := wallColor
 			valFloat := applyFalloff(nearestDist, lightIntensity, float64(wallColor.R+wallColor.G+wallColor.B)/765.0/3.0)
 			wallColor.A = uint8(valFloat * 255)
 
-			if lightDither && frameNumber%2 == 0 && wallColor.A > 0 && wallColor.A != 255 {
-				wallColor.A = wallColor.A - 2
-			}
-
-			// Draw the wall slice with corrected distance
+			// Calculate line height and start/end of the slice
 			lineHeight := int(float64(screenHeight) / nearestDist)
 			drawStart := -lineHeight/2 + screenHeight/2
 			if drawStart < 0 {
@@ -75,11 +74,45 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				drawEnd = screenHeight - 1
 			}
 
-			// Draw the line representing the wall column
-			vector.StrokeLine(screen, float32(x), float32(drawStart), float32(x), float32(drawEnd), 1, wallColor, false)
+			// 4. Calculate the correct X position on the texture based on hitPos
+			wallLength := math.Sqrt(math.Pow(wall.X2-wall.X1, 2) + math.Pow(wall.Y2-wall.Y1, 2))
+			hitDistance := math.Sqrt(math.Pow(hitPos.X-wall.X1, 2) + math.Pow(hitPos.Y-wall.Y1, 2))
+			wallHitPosition := hitDistance / wallLength
+
+			textureWidth := wallImg.Bounds().Dx()
+			textureX := int(wallHitPosition*float64(textureWidth)) % textureWidth
+			if textureX < 0 {
+				textureX += textureWidth
+			}
+
+			// 5. Texture clipping and scaling
+			textureHeight := wallImg.Bounds().Dy()
+			textureStep := float64(textureHeight) / float64(lineHeight) // Step size for texture Y
+			textureY := 0.0
+
+			// If the wall height is larger than the screen, adjust textureY and clip the texture
+			if lineHeight > screenHeight {
+				// Adjust the starting texture Y to account for clipping at the top of the screen
+				textureY = float64(lineHeight-screenHeight) / 2 * textureStep
+				drawStart = 0 // Clamp drawStart to 0 (top of screen)
+			}
+
+			// 6. Create a sub-image of the texture slice to draw (from textureX to textureX + 1)
+			srcRect := image.Rect(textureX, int(textureY), textureX+1, textureHeight)
+			textureSlice := wallImg.SubImage(srcRect).(*ebiten.Image)
+
+			// 7. Apply shading and draw the texture slice
+			op := &ebiten.DrawImageOptions{Filter: ebiten.FilterNearest}
+			op.GeoM.Scale(1, float64(lineHeight)/float64(textureHeight)) // Scale texture to line height
+			op.GeoM.Translate(float64(x), float64(drawStart))            // Position the texture slice
+			op.ColorM.Scale(float64(wallColor.R)/255, float64(wallColor.G)/255, float64(wallColor.B)/255, float64(wallColor.A)/255)
+
+			// Draw the texture slice
+			screen.DrawImage(textureSlice, op)
 		}
 	}
 
+	//Minimap
 	for _, v := range walls {
 		// Convert vector coordinates to screen coordinates
 		x1, y1 := float32(v.X1), float32(v.Y1)
@@ -92,4 +125,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	vector.DrawFilledCircle(screen, miniMapOffset+float32(player.pos.X)*miniMapSize, miniMapOffset+float32(player.pos.Y)*miniMapSize, 5, colornames.Yellow, false)
 
 	ebitenutil.DebugPrint(screen, fmt.Sprintf("FPS: %v, vel: %3.2f,%3.2f, angle: %3.2f, speed: %3.2f", int(ebiten.ActualFPS()), player.velocity.X, player.velocity.Y, player.angle, math.Sqrt(float64(player.velocity.X*player.velocity.X+player.velocity.Y*player.velocity.Y))))
+}
+
+func RelativeCrop(source *ebiten.Image, r image.Rectangle) *ebiten.Image {
+	rx, ry := source.Bounds().Min.X+r.Min.X, source.Bounds().Min.Y+r.Min.Y
+	return source.SubImage(image.Rect(rx, ry, rx+r.Max.X, ry+r.Max.Y)).(*ebiten.Image)
 }

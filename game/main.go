@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
 const (
@@ -15,9 +16,13 @@ const (
 	screenHeight = 720
 	mapScaleDiv  = 50
 	levelPath    = "../level1.txt"
+	spriteFile   = "test.png"
 )
 
-var walls = []Vec64{}
+var (
+	walls   = []Vec64{}
+	wallImg *ebiten.Image
+)
 
 func (g *Game) Layout(w, h int) (int, int) {
 	return w, h
@@ -45,6 +50,12 @@ func main() {
 			}
 		}
 	}()
+
+	var err error
+	wallImg, _, err = ebitenutil.NewImageFromFile(spriteFile)
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
 
 	if err := ebiten.RunGame(&Game{}); err != nil {
 		panic(err)

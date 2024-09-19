@@ -38,14 +38,13 @@ func movementDirection(wall Vec64) XY64 {
 	}
 }
 
-// func rayIntersectsSegment(px, py, rayDirX, rayDirY float64, wall Vec64) (float64, bool) {
-func rayIntersectsSegment(p, rayDir XY64, wall Vec64) (float64, bool) {
+func rayIntersectsSegment(p, rayDir XY64, wall Vec64) (float64, XY64, bool) {
 	// Using line intersection formula
 	x1, y1, x2, y2 := wall.X1, wall.Y1, wall.X2, wall.Y2
 
 	denom := (x1-x2)*(p.Y+rayDir.Y-p.Y) - (y1-y2)*(p.X+rayDir.X-p.X)
 	if denom == 0 {
-		return 0, false // Parallel lines
+		return 0, XY64{}, false // Parallel lines
 	}
 
 	// t and u parameters for intersection formula
@@ -54,10 +53,15 @@ func rayIntersectsSegment(p, rayDir XY64, wall Vec64) (float64, bool) {
 
 	// If t and u are valid, we have an intersection
 	if t >= 0 && t <= 1 && u > 0 {
-		return u, true
+		// Calculate the intersection point using t
+		intersection := XY64{
+			X: x1 + t*(x2-x1),
+			Y: y1 + t*(y2-y1),
+		}
+		return u, intersection, true
 	}
 
-	return 0, false
+	return 0, XY64{}, false
 }
 
 func BoxToVectors(x, y, width, height float64) []Vec64 {
