@@ -163,10 +163,8 @@ func findClosestWallForRay(node *BSPNode, rayDir pos32, nearestDist *float32, cl
 		return
 	}
 
-	// Determine which side of the partition wall the player is on
 	raySide := pointSide(player.pos, node.wall)
 
-	// Back-to-front traversal to ensure proper occlusion (Painter's Algorithm)
 	if raySide > 0 {
 		findClosestWallForRay(node.back, rayDir, nearestDist, closestWall, hitPos)
 		checkAndTrackWallForRay(node.wall, rayDir, nearestDist, closestWall, hitPos)
@@ -195,7 +193,6 @@ var wg sync.WaitGroup
 
 func renderScene(screen *ebiten.Image) {
 
-	//Move texture calculation here
 	for x := 0; x < screenWidth; x += workSize {
 		wg.Add(1)
 		go func(start int) {
@@ -267,7 +264,6 @@ func renderScene(screen *ebiten.Image) {
 	renderWallSlice(screen)
 }
 
-// Render a single slice of the wall for the current ray
 func renderWallSlice(screen *ebiten.Image) {
 
 	for _, data := range rayList {
@@ -280,7 +276,6 @@ func renderWallSlice(screen *ebiten.Image) {
 		op.GeoM.Translate(float64(data.x), float64(data.drawStart))       // Position the texture slice
 		op.ColorScale.Scale(data.valFloat, data.valFloat, data.valFloat, 1)
 
-		// Draw the texture slice to the screen
 		screen.DrawImage(wallImg.SubImage(srcRect).(*ebiten.Image), op)
 	}
 }

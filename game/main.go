@@ -48,7 +48,7 @@ func main() {
 
 	ebiten.SetVsyncEnabled(false)
 	ebiten.SetWindowSize(screenWidth, screenHeight)
-	ebiten.SetWindowTitle("Raycaster with Vectors")
+	ebiten.SetWindowTitle("Raycaster with vectors and BSP")
 
 	readVecs()
 
@@ -58,7 +58,7 @@ func main() {
 	go func() {
 		var oldModTime time.Time
 		for {
-			time.Sleep(time.Millisecond * 500)
+			time.Sleep(time.Second)
 			stat, _ := os.Stat(levelPath)
 			if stat.ModTime() != oldModTime {
 				oldModTime = stat.ModTime()
