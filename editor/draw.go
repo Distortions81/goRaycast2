@@ -11,12 +11,9 @@ import (
 
 // Draw is called every frame
 func (g *Game) Draw(screen *ebiten.Image) {
-	// Clear the screen with a white background
 	screen.Fill(color.Black)
 
 	drawGrid(g, screen)
-
-	// Create a new vector image to draw on
 
 	// Draw each vector with respect to the camera position
 	for _, vec := range walls {

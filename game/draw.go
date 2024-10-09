@@ -5,6 +5,7 @@ import (
 	"image/color"
 	"math"
 	"sync"
+	"time"
 
 	"github.com/chewxy/math32"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -27,12 +28,13 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	defer renderLock.Unlock()
 
 	frameNumber++
+	start := time.Now()
 
 	//renderFloorAndCeiling(screen)
 	renderScene(bspData, player.pos, player.angle, screen)
 	renderMinimap(screen)
 
-	ebitenutil.DebugPrint(screen, fmt.Sprintf("FPS: %v", int(ebiten.ActualFPS())))
+	ebitenutil.DebugPrint(screen, fmt.Sprintf("FPS: %v, Took: %v", int(ebiten.ActualFPS()), time.Since(start)))
 }
 
 var FOVDeg float32 = 60

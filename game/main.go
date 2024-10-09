@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -41,7 +42,9 @@ func main() {
 	readVecs()
 
 	bspData = buildBSPTree(walls)
+	fmt.Println("")
 
+	//Update level if written
 	go func() {
 		var oldModTime time.Time
 		for {
@@ -54,12 +57,14 @@ func main() {
 		}
 	}()
 
+	//Load sprite
 	var err error
 	wallImg, _, err = ebitenutil.NewImageFromFile(spriteFile)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
 
+	//Start game
 	if err := ebiten.RunGame(&Game{}); err != nil {
 		panic(err)
 	}

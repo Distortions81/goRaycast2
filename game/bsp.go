@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"image"
 
 	"github.com/chewxy/math32"
@@ -48,8 +49,10 @@ func buildBSPTree(walls []Line32) *BSPNode {
 		// Add the wall to the appropriate list
 		if frontCount == 2 {
 			frontWalls = append(frontWalls, wall)
+			fmt.Printf("Front wall: %v, ", wall)
 		} else if backCount == 2 {
 			backWalls = append(backWalls, wall)
+			fmt.Printf("Back wall: %v, ", wall)
 		} else {
 			// Split wall logic can go here for walls that straddle both sides (if needed)
 		}
