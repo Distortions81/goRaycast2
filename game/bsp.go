@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"image"
+	"sync"
 
 	"github.com/chewxy/math32"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -14,6 +15,11 @@ type BSPNode struct {
 	back   *BSPNode // The back subspace
 	isLeaf bool     // Whether this node is a leaf node
 	walls  []Line32 // Walls in the node (for leaf nodes)
+}
+
+type renderData struct {
+	textureX, lineHeight, drawStart, x int
+	textureY, valFloat                 float32
 }
 
 // Build a BSP tree from a list of walls
@@ -49,10 +55,10 @@ func buildBSPTree(walls []Line32) *BSPNode {
 		// Add the wall to the appropriate list
 		if frontCount == 2 {
 			frontWalls = append(frontWalls, wall)
-			fmt.Printf("F: %v, ", wall)
+			//fmt.Printf("F: %v, ", wall)
 		} else if backCount == 2 {
 			backWalls = append(backWalls, wall)
-			fmt.Printf("B: %v, ", wall)
+			//fmt.Printf("B: %v, ", wall)
 		} else {
 			fmt.Printf("warning: skipped split wall: %v\n", wall)
 			// Split wall logic can go here for walls that straddle both sides (if needed)
@@ -69,25 +75,25 @@ func buildBSPTree(walls []Line32) *BSPNode {
 }
 
 // Traverse the BSP tree and render the closest wall in correct order
-func renderBSPTree(node *BSPNode, playerPos pos32, screen *ebiten.Image, nearestDist *float32, closestWall *Line32) {
+func renderBSPTree(node *BSPNode, nearestDist *float32, closestWall *Line32) {
 	if node == nil {
 		return
 	}
 
 	// Determine which side of the partition wall the player is on
-	playerSide := pointSide(playerPos, node.wall)
+	playerSide := pointSide(player.pos, node.wall)
 
 	// Back-to-front traversal to ensure proper occlusion (Painter's Algorithm)
 	if playerSide > 0 {
 		// Player is in front of the wall; traverse the back subspace first
-		renderBSPTree(node.back, playerPos, screen, nearestDist, closestWall)
-		checkAndRenderWall(node.wall, playerPos, nearestDist, closestWall)
-		renderBSPTree(node.front, playerPos, screen, nearestDist, closestWall)
+		renderBSPTree(node.back, nearestDist, closestWall)
+		checkAndRenderWall(node.wall, nearestDist, closestWall)
+		renderBSPTree(node.front, nearestDist, closestWall)
 	} else {
 		// Player is behind the wall; traverse the front subspace first
-		renderBSPTree(node.front, playerPos, screen, nearestDist, closestWall)
-		checkAndRenderWall(node.wall, playerPos, nearestDist, closestWall)
-		renderBSPTree(node.back, playerPos, screen, nearestDist, closestWall)
+		renderBSPTree(node.front, nearestDist, closestWall)
+		checkAndRenderWall(node.wall, nearestDist, closestWall)
+		renderBSPTree(node.back, nearestDist, closestWall)
 	}
 }
 
@@ -140,9 +146,9 @@ func distanceToWall(wall Line32, playerPos pos32) float32 {
 }
 
 // Check the distance to the current wall and update the closest wall if it's nearer
-func checkAndRenderWall(wall Line32, playerPos pos32, nearestDist *float32, closestWall *Line32) {
+func checkAndRenderWall(wall Line32, nearestDist *float32, closestWall *Line32) {
 	// Calculate distance from player to wall
-	dist := distanceToWall(wall, playerPos)
+	dist := distanceToWall(wall, player.pos)
 
 	// If this wall is closer than the previous nearest, update the nearest wall
 	if dist < *nearestDist {
@@ -152,30 +158,30 @@ func checkAndRenderWall(wall Line32, playerPos pos32, nearestDist *float32, clos
 }
 
 // Traverse the BSP tree and find the closest wall for the current ray
-func findClosestWallForRay(node *BSPNode, playerPos pos32, rayDir pos32, nearestDist *float32, closestWall *Line32, hitPos *pos32) {
+func findClosestWallForRay(node *BSPNode, rayDir pos32, nearestDist *float32, closestWall *Line32, hitPos *pos32) {
 	if node == nil {
 		return
 	}
 
 	// Determine which side of the partition wall the player is on
-	raySide := pointSide(playerPos, node.wall)
+	raySide := pointSide(player.pos, node.wall)
 
 	// Back-to-front traversal to ensure proper occlusion (Painter's Algorithm)
 	if raySide > 0 {
-		findClosestWallForRay(node.back, playerPos, rayDir, nearestDist, closestWall, hitPos)
-		checkAndTrackWallForRay(node.wall, playerPos, rayDir, nearestDist, closestWall, hitPos)
-		findClosestWallForRay(node.front, playerPos, rayDir, nearestDist, closestWall, hitPos)
+		findClosestWallForRay(node.back, rayDir, nearestDist, closestWall, hitPos)
+		checkAndTrackWallForRay(node.wall, rayDir, nearestDist, closestWall, hitPos)
+		findClosestWallForRay(node.front, rayDir, nearestDist, closestWall, hitPos)
 	} else {
-		findClosestWallForRay(node.front, playerPos, rayDir, nearestDist, closestWall, hitPos)
-		checkAndTrackWallForRay(node.wall, playerPos, rayDir, nearestDist, closestWall, hitPos)
-		findClosestWallForRay(node.back, playerPos, rayDir, nearestDist, closestWall, hitPos)
+		findClosestWallForRay(node.front, rayDir, nearestDist, closestWall, hitPos)
+		checkAndTrackWallForRay(node.wall, rayDir, nearestDist, closestWall, hitPos)
+		findClosestWallForRay(node.back, rayDir, nearestDist, closestWall, hitPos)
 	}
 }
 
 // Check if the ray intersects with the current wall, and track the closest wall if it does
-func checkAndTrackWallForRay(wall Line32, playerPos pos32, rayDir pos32, nearestDist *float32, closestWall *Line32, hitPos *pos32) {
+func checkAndTrackWallForRay(wall Line32, rayDir pos32, nearestDist *float32, closestWall *Line32, hitPos *pos32) {
 	// Ray-wall intersection logic
-	if dist, hPos, hit := rayIntersectsSegment(playerPos, rayDir, wall); hit {
+	if dist, hPos, hit := rayIntersectsSegment(rayDir, wall); hit {
 		// If this wall is closer than the previous nearest, update the nearest wall
 		if dist < *nearestDist {
 			*nearestDist = dist
@@ -185,98 +191,96 @@ func checkAndTrackWallForRay(wall Line32, playerPos pos32, rayDir pos32, nearest
 	}
 }
 
-// Main rendering loop
-func renderScene(bspRoot *BSPNode, playerPos pos32, playerAngle float32, screen *ebiten.Image) {
-	for x := 0; x < screenWidth; x++ {
-		// 1. Map screen X to camera plane (-1 to 1)
-		cameraX := 2*float32(x)/float32(screenWidth) - 1
+var wg sync.WaitGroup
 
-		// 2. Calculate the ray direction based on the player's current angle and camera plane offset
-		rayDir := angleToXY(playerAngle+math32.Atan(cameraX), 1)
+func renderScene(screen *ebiten.Image) {
 
-		// Variables to track the nearest wall and intersection for this ray
-		var nearestDist float32 = math32.MaxFloat32
-		var closestWall Line32
-		var hitPos pos32
+	//Move texture calculation here
+	for x := 0; x < screenWidth; x += workSize {
+		wg.Add(1)
+		go func(start int) {
+			end := min(start+workSize, screenWidth-1)
+			for col := start; col < end; col++ {
+				cameraX := 2*float32(col)/float32(screenWidth) - 1
+				rayDir := angleToXY(player.angle+math32.Atan(cameraX), 1)
 
-		// Traverse the BSP tree and find the closest wall for this ray
-		findClosestWallForRay(bspRoot, playerPos, rayDir, &nearestDist, &closestWall, &hitPos)
+				var nearestDist float32 = math32.MaxFloat32
+				var wall Line32
+				var hitPos pos32
 
-		// Correct the fisheye effect by adjusting the distance based on the angle of the ray
-		correctedDist := nearestDist * math32.Cos(math32.Atan(cameraX))
+				findClosestWallForRay(bspData, rayDir, &nearestDist, &wall, &hitPos)
+				correctedDist := nearestDist * math32.Cos(math32.Atan(cameraX))
 
-		// 3. If a closest wall is found, render the wall slice
-		if nearestDist < math32.MaxFloat32 {
-			renderWallSlice(closestWall, hitPos, correctedDist, x, screen)
-		}
+				lineHeight := int(float32(screenHeight) / correctedDist)
+				drawStart := -lineHeight/2 + screenHeight/2
+				if drawStart < 0 {
+					drawStart = 0
+				}
+				drawEnd := lineHeight/2 + screenHeight/2
+				if drawEnd >= screenHeight {
+					drawEnd = screenHeight - 1
+				}
+
+				// Calculate the direction vector for the wall
+				wallDirX := wall.X2 - wall.X1
+				wallDirY := wall.Y2 - wall.Y1
+				wallLength := math32.Sqrt(wallDirX*wallDirX + wallDirY*wallDirY)
+
+				// Normalize the direction vector
+				wallDirX /= wallLength
+				wallDirY /= wallLength
+
+				// Calculate the hit position along the wall
+				dx := hitPos.X - wall.X1
+				dy := hitPos.Y - wall.Y1
+				wallHitPosition := (dx*wallDirX + dy*wallDirY)
+
+				// Calculate texture X based on the fixed texture repeat distance
+				wallHitPosition = math32.Mod(wallHitPosition, textureRepeatDistance)
+				textureX := int((wallHitPosition/textureRepeatDistance)*float32(textureWidth)) % textureWidth
+				if textureX < 0 {
+					textureX += textureWidth
+				}
+
+				// Texture Y scaling and clipping
+				var textureStep float32 = float32(textureHeight) / float32(lineHeight)
+				var textureY float32 = 0.0
+
+				// If the wall height is larger than the screen, adjust textureY and clip the texture
+				if lineHeight > screenHeight {
+					textureY = float32(lineHeight-screenHeight) / 2.0 * textureStep
+					drawStart = 0 // Clamp drawStart to 0 (top of screen)
+				}
+
+				// Calculate the lighting/shading factor
+				valFloat := applyFalloff(nearestDist, lightIntensity, float32(wallColor.R+wallColor.G+wallColor.B)/765.0/3.0)
+
+				rayList[col] = renderData{
+					textureX: textureX, lineHeight: lineHeight, x: col,
+					drawStart: drawStart, textureY: textureY, valFloat: valFloat}
+			}
+			wg.Done()
+		}(x)
 	}
+	wg.Wait()
+
+	renderWallSlice(screen)
 }
 
 // Render a single slice of the wall for the current ray
-func renderWallSlice(wall Line32, hitPos pos32, nearestDist float32, x int, screen *ebiten.Image) {
-	// Calculate the line height based on the corrected distance and project the wall slice
-	lineHeight := int(float32(screenHeight) / nearestDist)
-	drawStart := -lineHeight/2 + screenHeight/2
-	if drawStart < 0 {
-		drawStart = 0
+func renderWallSlice(screen *ebiten.Image) {
+
+	for _, data := range rayList {
+		// Create a sub-image of the texture slice to draw (from textureX to textureX + 1)
+		srcRect := image.Rect(data.textureX, int(data.textureY), data.textureX+1, textureHeight)
+
+		// Apply shading and draw the texture slice
+		op := &ebiten.DrawImageOptions{Filter: ebiten.FilterNearest}
+		op.GeoM.Scale(1, float64(data.lineHeight)/float64(textureHeight)) // Scale texture to line height
+		op.GeoM.Translate(float64(data.x), float64(data.drawStart))       // Position the texture slice
+		op.ColorScale.Scale(data.valFloat, data.valFloat, data.valFloat, 1)
+
+		// Draw the texture slice to the screen
+		screen.DrawImage(wallImg.SubImage(srcRect).(*ebiten.Image), op)
 	}
-	drawEnd := lineHeight/2 + screenHeight/2
-	if drawEnd >= screenHeight {
-		drawEnd = screenHeight - 1
-	}
-
-	// Precompute texture width and height (cached outside the loop in the main render function)
-	textureBounds := wallImg.Bounds()
-	textureWidth := textureBounds.Dx()
-	textureHeight := textureBounds.Dy()
-
-	// Calculate the direction vector for the wall
-	wallDirX := wall.X2 - wall.X1
-	wallDirY := wall.Y2 - wall.Y1
-	wallLength := math32.Sqrt(wallDirX*wallDirX + wallDirY*wallDirY)
-
-	// Normalize the direction vector
-	wallDirX /= wallLength
-	wallDirY /= wallLength
-
-	// Use a fixed repetition distance for the texture (e.g., repeat every 1 unit of game space)
-	var textureRepeatDistance float32 = 1.0
-
-	// Calculate the hit position along the wall
-	dx := hitPos.X - wall.X1
-	dy := hitPos.Y - wall.Y1
-	wallHitPosition := (dx*wallDirX + dy*wallDirY)
-
-	// Calculate texture X based on the fixed texture repeat distance
-	wallHitPosition = math32.Mod(wallHitPosition, textureRepeatDistance)
-	textureX := int((wallHitPosition/textureRepeatDistance)*float32(textureWidth)) % textureWidth
-	if textureX < 0 {
-		textureX += textureWidth
-	}
-
-	// Texture Y scaling and clipping
-	var textureStep float32 = float32(textureHeight) / float32(lineHeight)
-	var textureY float32 = 0.0
-
-	// If the wall height is larger than the screen, adjust textureY and clip the texture
-	if lineHeight > screenHeight {
-		textureY = float32(lineHeight-screenHeight) / 2 * textureStep
-		drawStart = 0 // Clamp drawStart to 0 (top of screen)
-	}
-
-	// Create a sub-image of the texture slice to draw (from textureX to textureX + 1)
-	srcRect := image.Rect(textureX, int(textureY), textureX+1, textureHeight)
-	textureSlice := wallImg.SubImage(srcRect).(*ebiten.Image)
-
-	// Calculate the lighting/shading factor
-	valFloat := applyFalloff(nearestDist, lightIntensity, float32(wallColor.R+wallColor.G+wallColor.B)/765.0/3.0)
-
-	// Apply shading and draw the texture slice
-	op := &ebiten.DrawImageOptions{Filter: ebiten.FilterNearest}
-	op.GeoM.Scale(1, float64(lineHeight)/float64(textureHeight)) // Scale texture to line height
-	op.GeoM.Translate(float64(x), float64(drawStart))            // Position the texture slice
-	op.ColorScale.Scale(valFloat, valFloat, valFloat, 1)
-
-	// Draw the texture slice to the screen
-	screen.DrawImage(textureSlice, op)
 }

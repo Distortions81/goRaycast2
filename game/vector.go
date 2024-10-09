@@ -38,18 +38,18 @@ func movementDirection(wall Line32) pos32 {
 	}
 }
 
-func rayIntersectsSegment(p, rayDir pos32, wall Line32) (float32, pos32, bool) {
+func rayIntersectsSegment(rayDir pos32, wall Line32) (float32, pos32, bool) {
 	// Using line intersection formula
 	x1, y1, x2, y2 := wall.X1, wall.Y1, wall.X2, wall.Y2
 
-	denom := (x1-x2)*(p.Y+rayDir.Y-p.Y) - (y1-y2)*(p.X+rayDir.X-p.X)
+	denom := (x1-x2)*(player.pos.Y+rayDir.Y-player.pos.Y) - (y1-y2)*(player.pos.X+rayDir.X-player.pos.X)
 	if denom == 0 {
 		return 0, pos32{}, false // Parallel lines
 	}
 
 	// t and u parameters for intersection formula
-	t := ((x1-p.X)*(p.Y+rayDir.Y-p.Y) - (y1-p.Y)*(p.X+rayDir.X-p.X)) / denom
-	u := -((x1-x2)*(y1-p.Y) - (y1-y2)*(x1-p.X)) / denom
+	t := ((x1-player.pos.X)*(player.pos.Y+rayDir.Y-player.pos.Y) - (y1-player.pos.Y)*(player.pos.X+rayDir.X-player.pos.X)) / denom
+	u := -((x1-x2)*(y1-player.pos.Y) - (y1-y2)*(x1-player.pos.X)) / denom
 
 	// If t and u are valid, we have an intersection
 	if t >= 0 && t <= 1 && u > 0 {

@@ -1,9 +1,11 @@
 package main
 
 import (
-	"fmt"
+	"image"
 	"log"
+	"math"
 	"os"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -30,6 +32,15 @@ func (g *Game) Layout(w, h int) (int, int) {
 	return w, h
 }
 
+var (
+	textureBounds image.Rectangle
+	textureWidth,
+	textureHeight int
+	textureRepeatDistance float32 = 1.0
+	workSize              int     = 32
+	rayList               [screenWidth]renderData
+)
+
 func main() {
 	player = playerData{
 		pos: pos32{X: 3, Y: 3}, angle: 4,
@@ -42,7 +53,6 @@ func main() {
 	readVecs()
 
 	bspData = buildBSPTree(walls)
-	fmt.Println("")
 
 	//Update level if written
 	go func() {
@@ -63,6 +73,12 @@ func main() {
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
+
+	// Precompute texture width and height (cached outside the loop in the main render function)
+	textureBounds = wallImg.Bounds()
+	textureWidth = textureBounds.Dx()
+	textureHeight = textureBounds.Dy()
+	workSize = int(math.Round(float64(screenWidth)/float64(runtime.NumCPU()))) / 2
 
 	//Start game
 	if err := ebiten.RunGame(&Game{}); err != nil {

@@ -21,7 +21,11 @@ var (
 	frameNumber int
 )
 
-var renderLock sync.Mutex
+var (
+	renderLock sync.Mutex
+	worstFrame int
+	bestFrame  int = 10000
+)
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	renderLock.Lock()
@@ -31,10 +35,17 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	start := time.Now()
 
 	//renderFloorAndCeiling(screen)
-	renderScene(bspData, player.pos, player.angle, screen)
+	renderScene(screen)
 	renderMinimap(screen)
 
-	ebitenutil.DebugPrint(screen, fmt.Sprintf("FPS: %v, Took: %v", int(ebiten.ActualFPS()), time.Since(start)))
+	took := time.Since(start).Microseconds()
+	if frameNumber%6000 == 0 {
+		worstFrame = 0
+		bestFrame = 10000
+	}
+	worstFrame = max(worstFrame, int(took))
+	bestFrame = min(bestFrame, int(took))
+	ebitenutil.DebugPrint(screen, fmt.Sprintf("FPS: %3v, Took: %4vus / Max: %4vus / Min: %4vus", int(ebiten.ActualFPS()), took, worstFrame, bestFrame))
 }
 
 var FOVDeg float32 = 60
