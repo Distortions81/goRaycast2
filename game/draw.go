@@ -28,7 +28,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	frameNumber++
 
-	renderFloorAndCeiling(screen)
+	//renderFloorAndCeiling(screen)
 	renderScene(bspData, player.pos, player.angle, screen)
 	renderMinimap(screen)
 
