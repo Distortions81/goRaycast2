@@ -17,7 +17,7 @@ import (
 const (
 	screenWidth  = 1280
 	screenHeight = 720
-	scaleDiv     = 10
+	scaleDiv     = 20
 	levelPath    = "../level1.txt"
 	spriteFile   = "test.png"
 )
@@ -43,7 +43,7 @@ var (
 
 func main() {
 	player = playerData{
-		pos: pos32{X: 3, Y: 3}, angle: math.Pi,
+		pos: pos32{X: 3, Y: 3}, angle: math.Pi / 2,
 	}
 
 	ebiten.SetVsyncEnabled(false)
