@@ -15,7 +15,7 @@ type Game struct {
 	start,
 	lastMouse pos32
 
-	createMode,
+	createMode, pStartMode,
 	firstClick,
 	secondClick bool
 

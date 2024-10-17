@@ -10,6 +10,7 @@ import (
 func (g *Game) writeLevel() {
 	buf := ""
 
+	buf = buf + fmt.Sprintf("%v,%v\n", pStartPos.X, pStartPos.Y)
 	for _, item := range walls {
 		buf = buf + fmt.Sprintf("%v,%v,%v,%v\n", item.X1/scaleDiv, item.Y1/scaleDiv, item.X2/scaleDiv, item.Y2/scaleDiv)
 	}
@@ -27,7 +28,17 @@ func readLevel() {
 	text := string(data)
 	lines := strings.Split(text, "\n")
 
-	for _, line := range lines {
+	for l, line := range lines {
+		if l == 0 {
+			args := strings.Split(line, ",")
+			if len(args) != 2 {
+				continue
+			}
+			x1, _ := strconv.ParseFloat(args[0], 64)
+			y1, _ := strconv.ParseFloat(args[1], 64)
+			pStartPos = pos32{X: float32(x1), Y: float32(y1)}
+			continue
+		}
 		args := strings.Split(line, ",")
 		if len(args) != 4 {
 			continue

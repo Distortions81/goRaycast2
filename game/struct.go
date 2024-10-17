@@ -1,6 +1,6 @@
 package main
 
-type Line32 struct {
+type line32 struct {
 	X1, Y1, X2, Y2 float32
 }
 

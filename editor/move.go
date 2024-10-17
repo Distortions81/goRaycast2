@@ -13,11 +13,18 @@ func (g *Game) Update() error {
 	mpos := pos32{X: float32(mouseX), Y: float32(mouseY)}
 	wpos := pos32{X: mpos.X - g.camera.X, Y: mpos.Y - g.camera.Y}
 
-	if ebiten.IsKeyPressed(ebiten.KeyC) && !g.createMode {
+	//Follow cursor while placing player start
+	if g.pStartMode {
+		pStartPos = wpos
+	}
+
+	if inpututil.IsKeyJustPressed(ebiten.KeyC) && !g.createMode {
 		g.createMode = true
 		g.firstClick = false
 		g.secondClick = false
 		g.start = pos32{X: 0, Y: 0}
+	} else if inpututil.IsKeyJustPressed(ebiten.KeyP) {
+		handlePMode(g)
 	} else if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 		if g.createMode {
 			snappedPos := snapPos(wpos, walls, lineSnapDist)
@@ -41,6 +48,8 @@ func (g *Game) Update() error {
 				g.secondClick = true
 				g.createMode = false
 			}
+		} else if g.pStartMode {
+			handlePMode(g)
 		}
 	} else if ebiten.IsMouseButtonPressed(ebiten.MouseButtonRight) {
 		g.camera.X += float32(mouseX - int(g.lastMouse.X))
@@ -49,4 +58,11 @@ func (g *Game) Update() error {
 
 	g.lastMouse = mpos
 	return nil
+}
+
+func handlePMode(g *Game) {
+	if g.pStartMode {
+		g.writeLevel()
+	}
+	g.pStartMode = !g.pStartMode
 }

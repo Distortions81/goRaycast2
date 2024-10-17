@@ -23,6 +23,7 @@ const (
 
 var (
 	walls     = []line32{}
+	pStartPos pos32
 	gridColor = color.NRGBA{R: gridBright, G: gridBright, B: gridBright, A: 255}
 	bgImage   *ebiten.Image
 )

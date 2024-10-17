@@ -16,11 +16,14 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if bgImage != nil {
 		op := &ebiten.DrawImageOptions{}
 		op.GeoM.Scale(2, 2)
+		op.GeoM.Translate(float64(g.camera.X), float64(g.camera.Y))
 		op.ColorScale.ScaleAlpha(0.3)
 		screen.DrawImage(bgImage, op)
 	}
 
 	drawGrid(g, screen)
+
+	vector.DrawFilledCircle(screen, (pStartPos.X + g.camera.X), (pStartPos.Y + g.camera.Y), lineWidth*4, colornames.Green, true)
 
 	// Draw each vector with respect to the camera position
 	for _, vec := range walls {
@@ -48,7 +51,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if g.createMode {
 		ebitenutil.DebugPrint(screen, "Vector created, click again to specify vector end.")
 	} else {
-		ebitenutil.DebugPrint(screen, "Press 'c' to create a vector. Hold right click to move camera.")
+		ebitenutil.DebugPrint(screen, "Press 'c' to create a vector. Hold right click to move camera. p = player start")
 	}
 }
 

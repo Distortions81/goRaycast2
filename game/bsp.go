@@ -9,11 +9,11 @@ import (
 )
 
 type BSPNode struct {
-	wall   Line32   // The wall that splits the space
+	wall   line32   // The wall that splits the space
 	front  *BSPNode // The front subspace
 	back   *BSPNode // The back subspace
 	isLeaf bool     // Whether this node is a leaf node
-	walls  []Line32 // Walls in the node (for leaf nodes)
+	walls  []line32 // Walls in the node (for leaf nodes)
 }
 
 type renderData struct {
@@ -22,7 +22,7 @@ type renderData struct {
 }
 
 // Build a BSP tree from a list of walls
-func buildBSPTree(walls []Line32) *BSPNode {
+func buildBSPTree(walls []line32) *BSPNode {
 	if len(walls) == 0 {
 		return nil
 	}
@@ -31,7 +31,7 @@ func buildBSPTree(walls []Line32) *BSPNode {
 	partitionWall := walls[0]
 
 	// Initialize lists for front and back walls
-	var frontWalls, backWalls []Line32
+	var frontWalls, backWalls []line32
 
 	// Classify the remaining walls as either front or back of the partition wall
 	for i := 1; i < len(walls); i++ {
@@ -74,7 +74,7 @@ func buildBSPTree(walls []Line32) *BSPNode {
 }
 
 // Traverse the BSP tree and render the closest wall in correct order
-func renderBSPTree(node *BSPNode, nearestDist *float32, closestWall *Line32) {
+func renderBSPTree(node *BSPNode, nearestDist *float32, closestWall *line32) {
 	if node == nil {
 		return
 	}
@@ -97,7 +97,7 @@ func renderBSPTree(node *BSPNode, nearestDist *float32, closestWall *Line32) {
 }
 
 // Traverse the BSP tree and find the closest wall
-func findClosestWall(node *BSPNode, playerPos pos32, nearestDist *float32, closestWall *Line32) {
+func findClosestWall(node *BSPNode, playerPos pos32, nearestDist *float32, closestWall *line32) {
 	if node == nil {
 		return
 	}
@@ -120,12 +120,12 @@ func findClosestWall(node *BSPNode, playerPos pos32, nearestDist *float32, close
 }
 
 // Function to calculate which side of the wall the player is on
-func pointSide(p pos32, wall Line32) float32 {
+func pointSide(p pos32, wall line32) float32 {
 	return (wall.X2-wall.X1)*(p.Y-wall.Y1) - (wall.Y2-wall.Y1)*(p.X-wall.X1)
 }
 
 // Check the distance to the current wall and update the closest wall if it's nearer
-func checkAndTrackWall(wall Line32, playerPos pos32, nearestDist *float32, closestWall *Line32) {
+func checkAndTrackWall(wall line32, playerPos pos32, nearestDist *float32, closestWall *line32) {
 	// Calculate distance from player to wall
 	dist := distanceToWall(wall, playerPos)
 
@@ -137,7 +137,7 @@ func checkAndTrackWall(wall Line32, playerPos pos32, nearestDist *float32, close
 }
 
 // Calculate the distance from the player to a wall
-func distanceToWall(wall Line32, playerPos pos32) float32 {
+func distanceToWall(wall line32, playerPos pos32) float32 {
 	// This function should calculate the perpendicular distance from the player to the wall
 	// For now, assuming a simple Euclidean distance to one endpoint as a placeholder
 	// You can improve this with proper perpendicular distance calculation based on the player's position.
@@ -145,7 +145,7 @@ func distanceToWall(wall Line32, playerPos pos32) float32 {
 }
 
 // Check the distance to the current wall and update the closest wall if it's nearer
-func checkAndRenderWall(wall Line32, nearestDist *float32, closestWall *Line32) {
+func checkAndRenderWall(wall line32, nearestDist *float32, closestWall *line32) {
 	// Calculate distance from player to wall
 	dist := distanceToWall(wall, player.pos)
 
@@ -157,7 +157,7 @@ func checkAndRenderWall(wall Line32, nearestDist *float32, closestWall *Line32) 
 }
 
 // Traverse the BSP tree and find the closest wall for the current ray
-func findClosestWallForRay(node *BSPNode, rayDir pos32, nearestDist *float32, closestWall *Line32, hitPos *pos32) {
+func findClosestWallForRay(node *BSPNode, rayDir pos32, nearestDist *float32, closestWall *line32, hitPos *pos32) {
 	if node == nil {
 		return
 	}
@@ -176,7 +176,7 @@ func findClosestWallForRay(node *BSPNode, rayDir pos32, nearestDist *float32, cl
 }
 
 // Check if the ray intersects with the current wall, and track the closest wall if it does
-func checkAndTrackWallForRay(wall Line32, rayDir pos32, nearestDist *float32, closestWall *Line32, hitPos *pos32) {
+func checkAndTrackWallForRay(wall line32, rayDir pos32, nearestDist *float32, closestWall *line32, hitPos *pos32) {
 	// Ray-wall intersection logic
 	if dist, hPos, hit := rayIntersectsSegment(rayDir, wall); hit {
 		// If this wall is closer than the previous nearest, update the nearest wall
@@ -201,7 +201,7 @@ func renderScene(screen *ebiten.Image) {
 				rayDir := angleToXY(player.angle+math32.Atan(cameraX), 1)
 
 				var nearestDist float32 = math32.MaxFloat32
-				var wall Line32
+				var wall line32
 				var hitPos pos32
 
 				findClosestWallForRay(bspData, rayDir, &nearestDist, &wall, &hitPos)

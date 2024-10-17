@@ -13,7 +13,7 @@ const (
 )
 
 // Render a clipped wall on the minimap, ensuring it stays within the minimap radius
-func renderClippedWallOnMinimap(wall Line32, playerX, playerY int, screen *ebiten.Image) {
+func renderClippedWallOnMinimap(wall line32, playerX, playerY int, screen *ebiten.Image) {
 	// Translate wall coordinates relative to player position
 	dx1 := (wall.X1) - (player.pos.X)
 	dy1 := (wall.Y1) - (player.pos.Y)
@@ -88,7 +88,7 @@ func calculateDistance(x1, y1, x2, y2 float32) float32 {
 }
 
 // Check if a wall intersects the minimap radius
-func wallIntersectsMinimap(wall Line32) bool {
+func wallIntersectsMinimap(wall line32) bool {
 	// Calculate distances from both endpoints to the player position (minimap center)
 	dist1 := calculateDistance((wall.X1), (wall.Y1), (player.pos.X), (player.pos.Y))
 	dist2 := calculateDistance((wall.X2), (wall.Y2), (player.pos.X), (player.pos.Y))

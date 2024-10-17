@@ -17,13 +17,13 @@ import (
 const (
 	screenWidth  = 1280
 	screenHeight = 720
-	mapScaleDiv  = 25
+	scaleDiv     = 10
 	levelPath    = "../level1.txt"
 	spriteFile   = "test.png"
 )
 
 var (
-	walls   = []Line32{}
+	walls   = []line32{}
 	wallImg *ebiten.Image
 	bspData *BSPNode
 )
@@ -43,7 +43,7 @@ var (
 
 func main() {
 	player = playerData{
-		pos: pos32{X: 3, Y: 3}, angle: 4,
+		pos: pos32{X: 3, Y: 3}, angle: math.Pi,
 	}
 
 	ebiten.SetVsyncEnabled(false)
@@ -93,11 +93,21 @@ func readVecs() {
 		log.Fatalln("Unable to read " + levelPath)
 	}
 
-	tmp := []Line32{}
+	tmp := []line32{}
 	text := string(data)
 	lines := strings.Split(text, "\n")
 
-	for _, line := range lines {
+	for l, line := range lines {
+		if l == 0 {
+			args := strings.Split(line, ",")
+			if len(args) != 2 {
+				continue
+			}
+			x1, _ := strconv.ParseFloat(args[0], 32)
+			y1, _ := strconv.ParseFloat(args[1], 32)
+			player.pos = pos32{X: float32(x1) / scaleDiv, Y: float32(y1) / scaleDiv}
+			continue
+		}
 		args := strings.Split(line, ",")
 		if len(args) != 4 {
 			continue
@@ -107,7 +117,7 @@ func readVecs() {
 		x2, _ := strconv.ParseFloat(args[2], 32)
 		y2, _ := strconv.ParseFloat(args[3], 32)
 
-		tmp = append(tmp, Line32{X1: float32(x1) / mapScaleDiv, Y1: float32(y1) / mapScaleDiv, X2: float32(x2) / mapScaleDiv, Y2: float32(y2) / mapScaleDiv})
+		tmp = append(tmp, line32{X1: float32(x1) / scaleDiv, Y1: float32(y1) / scaleDiv, X2: float32(x2) / scaleDiv, Y2: float32(y2) / scaleDiv})
 	}
 
 	renderLock.Lock()

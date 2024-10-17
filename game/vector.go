@@ -31,14 +31,14 @@ func normalizeXY(v pos32) pos32 {
 	return pos32{v.X / magnitude, v.Y / magnitude}
 }
 
-func movementDirection(wall Line32) pos32 {
+func movementDirection(wall line32) pos32 {
 	return pos32{
 		X: wall.X2 - wall.X1,
 		Y: wall.Y2 - wall.Y1,
 	}
 }
 
-func rayIntersectsSegment(rayDir pos32, wall Line32) (float32, pos32, bool) {
+func rayIntersectsSegment(rayDir pos32, wall line32) (float32, pos32, bool) {
 	// Using line intersection formula
 	x1, y1, x2, y2 := wall.X1, wall.Y1, wall.X2, wall.Y2
 
@@ -64,13 +64,13 @@ func rayIntersectsSegment(rayDir pos32, wall Line32) (float32, pos32, bool) {
 	return 0, pos32{}, false
 }
 
-func BoxToVectors(x, y, width, height float32) []Line32 {
+func BoxToVectors(x, y, width, height float32) []line32 {
 	// Define the four corners of the box
-	topLeft := Line32{X1: x, Y1: y, X2: x + width, Y2: y}                       // Top edge
-	topRight := Line32{X1: x + width, Y1: y, X2: x + width, Y2: y + height}     // Right edge
-	bottomRight := Line32{X1: x + width, Y1: y + height, X2: x, Y2: y + height} // Bottom edge
-	bottomLeft := Line32{X1: x, Y1: y + height, X2: x, Y2: y}                   // Left edge
+	topLeft := line32{X1: x, Y1: y, X2: x + width, Y2: y}                       // Top edge
+	topRight := line32{X1: x + width, Y1: y, X2: x + width, Y2: y + height}     // Right edge
+	bottomRight := line32{X1: x + width, Y1: y + height, X2: x, Y2: y + height} // Bottom edge
+	bottomLeft := line32{X1: x, Y1: y + height, X2: x, Y2: y}                   // Left edge
 
 	// Return the four edges of the box
-	return []Line32{topLeft, topRight, bottomRight, bottomLeft}
+	return []line32{topLeft, topRight, bottomRight, bottomLeft}
 }
