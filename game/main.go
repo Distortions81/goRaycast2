@@ -17,7 +17,7 @@ import (
 const (
 	screenWidth  = 1280
 	screenHeight = 720
-	mapScaleDiv  = 50
+	mapScaleDiv  = 25
 	levelPath    = "../level1.txt"
 	spriteFile   = "test.png"
 )

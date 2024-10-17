@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"image"
 	"sync"
 
@@ -60,8 +59,8 @@ func buildBSPTree(walls []Line32) *BSPNode {
 			backWalls = append(backWalls, wall)
 			//fmt.Printf("B: %v, ", wall)
 		} else {
-			fmt.Printf("warning: skipped split wall: %v\n", wall)
-			// Split wall logic can go here for walls that straddle both sides (if needed)
+			//Split wallls
+			backWalls = append(backWalls, wall)
 		}
 	}
 
