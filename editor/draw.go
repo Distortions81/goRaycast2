@@ -13,6 +13,13 @@ import (
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(color.Black)
 
+	if bgImage != nil {
+		op := &ebiten.DrawImageOptions{}
+		op.GeoM.Scale(2, 2)
+		op.ColorScale.ScaleAlpha(0.3)
+		screen.DrawImage(bgImage, op)
+	}
+
 	drawGrid(g, screen)
 
 	// Draw each vector with respect to the camera position

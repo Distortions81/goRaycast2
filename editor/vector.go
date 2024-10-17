@@ -28,7 +28,8 @@ func snapPos(newPos pos32, existingPositions []line32, threshold float32) pos32 
 		}
 	}
 
-	return snapToGrid(newPos, gridSize, gridSnapDist)
+	//return snapToGrid(newPos, gridSize, gridSnapDist)
+	return newPos
 }
 
 func snapToGrid(pos pos32, gridSize, threshold float32) pos32 {
