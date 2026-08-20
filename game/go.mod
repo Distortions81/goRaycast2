@@ -1,6 +1,7 @@
 module test
 
-go 1.23.1
+go 1.26.6
+toolchain go1.26.6
 
 require (
 	github.com/chewxy/math32 v1.11.1
